@@ -1,0 +1,195 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download repository
+        uses: actions/checkout@v4
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Prepare Android project
+        run: |
+          mkdir -p app/src/main/assets
+          mkdir -p app/src/main/java/com/example/rpg
+          mkdir -p app/src/main/res/values
+
+          if [ -f index.html ]; then
+            cp index.html app/src/main/assets/index.html
+          fi
+
+          cat > settings.gradle <<'EOF'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = 'AdventureRPG'
+          include ':app'
+          EOF
+
+          cat > build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application' version '8.7.3' apply false
+          }
+          EOF
+
+          cat > gradle.properties <<'EOF'
+          android.useAndroidX=true
+          EOF
+
+          cat > app/build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application'
+          }
+
+          android {
+              namespace 'com.example.rpg'
+              compileSdk 35
+
+              defaultConfig {
+                  applicationId 'com.example.rpg'
+                  minSdk 23
+                  targetSdk 28
+                  versionCode 1
+                  versionName '1.0'
+              }
+          }
+          EOF
+
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <application
+                  android:theme="@android:style/Theme.Material.Light.NoActionBar"
+                  android:label="Adventure RPG"
+                  android:usesCleartextTraffic="true">
+                  <activity
+                      android:name=".MainActivity"
+                      android:screenOrientation="landscape"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+
+          cat > app/src/main/res/values/styles.xml <<'EOF'
+          <resources>
+              <style name="AppTheme" parent="@android:style/Theme.Material.Light.NoActionBar">
+                  <item name="android:colorAccent">#55bb77</item>
+              </style>
+          </resources>
+          EOF
+
+          cat > app/src/main/java/com/example/rpg/MainActivity.java <<'EOF'
+          package com.example.rpg;
+
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.webkit.WebView;
+          import android.webkit.WebSettings;
+          import android.view.View;
+
+          public class MainActivity extends Activity {
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+
+                  getWindow().getDecorView().setSystemUiVisibility(
+                      View.SYSTEM_UI_FLAG_FULLSCREEN |
+                      View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                      View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
+                      View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                  );
+
+                  WebView webView = new WebView(this);
+                  WebSettings settings = webView.getSettings();
+                  settings.setJavaScriptEnabled(true);
+                  settings.setDomStorageEnabled(true);
+                  webView.setBackgroundColor(0xFF87CEEB);
+
+                  setContentView(webView);
+                  webView.loadUrl("file:///android_asset/index.html");
+              }
+          }
+          EOF
+
+          cat > app/src/main/assets/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="ru">
+          <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Adventure RPG</title>
+          <style>
+          body { margin:0; background:#172333; color:white; font-family:Arial,sans-serif; text-align:center; }
+          main { padding:24px 12px; }
+          h1 { color:#8df0a5; }
+          button { padding:14px 22px; margin:6px; border:0; border-radius:12px; background:#398b58; color:white; font-size:18px; }
+          #world { height:45vh; background:linear-gradient(#79c9e8 0 55%,#659b52 55%); border-radius:16px; position:relative; overflow:hidden; }
+          #hero { position:absolute; left:48%; top:52%; font-size:42px; }
+          #info { background:#24384b; border-radius:12px; padding:12px; margin-top:12px; }
+          </style>
+          </head>
+          <body>
+          <main>
+          <h1>🌿 Adventure RPG</h1>
+          <div id="world"><div id="hero">🧙</div></div>
+          <div id="info">❤️ Здоровье: 100 | 🪙 Монеты: <span id="coins">0</span><br>Уровень 1 · Начинающий исследователь</div>
+          <p>Добро пожаловать в свой новый мир!</p>
+          <button onclick="move(-1)">⬅️</button>
+          <button onclick="move(1)">➡️</button>
+          <button onclick="collect()">🌿 Собрать ресурс</button>
+          <p id="message">Исследуй мир и собирай ресурсы!</p>
+          </main>
+          <script>
+          let x=48, coins=0;
+          function move(dir) {
+            x=Math.max(5,Math.min(90,x+dir*5));
+            document.getElementById('hero').style.left=x+'%';
+            document.getElementById('message').textContent='Ты исследуешь окрестности...';
+          }
+          function collect() {
+            coins+=1;
+            document.getElementById('coins').textContent=coins;
+            document.getElementById('message').textContent='Ты нашёл ресурс! Собрано: '+coins;
+          }
+          </script>
+          </body>
+          </html>
+          EOF
+
+      - name: Build APK
+        run: |
+          gradle --version
+          gradle assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AdventureRPG-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
