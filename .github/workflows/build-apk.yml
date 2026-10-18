@@ -27,24 +27,26 @@ jobs:
           mkdir -p app/src/main/res/values
           mkdir -p app/src/main/res/mipmap-mdpi app/src/main/res/mipmap-hdpi app/src/main/res/mipmap-xhdpi app/src/main/res/mipmap-xxhdpi app/src/main/res/mipmap-xxxhdpi
 
-          # Create a crisp pixel-style launcher icon with the letters RPG.
+          # Create a bold fantasy RPG shield icon.
           python3 -m pip install --quiet Pillow
           python3 - <<'PY'
           from PIL import Image, ImageDraw, ImageFont
           import os
           sizes = {'mdpi':48, 'hdpi':72, 'xhdpi':96, 'xxhdpi':144, 'xxxhdpi':192}
           for density, size in sizes.items():
-              im = Image.new('RGB', (size, size), '#172b38')
+              im = Image.new('RGB', (size, size), '#111a35')
               d = ImageDraw.Draw(im)
               # Pixel-art green field and gold frame.
               unit = max(2, size // 24)
-              d.rectangle((unit, unit, size-unit-1, size-unit-1), fill='#26334b', outline='#f5d46c', width=max(2, size//24))
-              d.rectangle((unit*2, int(size*.68), size-unit*2, size-unit*2), fill='#397747')
+              d.polygon([(size*.12,size*.10),(size*.88,size*.10),(size*.82,size*.68),(size*.50,size*.91),(size*.18,size*.68)], fill='#f5d46c')
+              d.polygon([(size*.19,size*.17),(size*.81,size*.17),(size*.75,size*.63),(size*.50,size*.82),(size*.25,size*.63)], fill='#5844a0')
+              d.rectangle((int(size*.32),int(size*.73),int(size*.43),int(size*.77)), fill='#7ecb68')
+              d.rectangle((int(size*.57),int(size*.73),int(size*.68),int(size*.77)), fill='#7ecb68')
               for x,y,col in [(0.18,0.72,'#6ba95b'),(0.34,0.82,'#8cc66a'),(0.68,0.75,'#6ba95b'),(0.82,0.84,'#8cc66a')]:
                   xx,yy=int(size*x),int(size*y)
                   d.rectangle((xx,yy,xx+unit*2,yy+unit*2), fill=col)
               font_path='/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
-              font=ImageFont.truetype(font_path, int(size*.34))
+              font=ImageFont.truetype(font_path, int(size*.30))
               box=d.textbbox((0,0),'RPG',font=font,stroke_width=max(1,size//80))
               tw,th=box[2]-box[0],box[3]-box[1]
               d.text(((size-tw)//2, int(size*.23)-box[1]),'RPG',font=font,fill='#fff2c5',stroke_width=max(1,size//80),stroke_fill='#743e38')
