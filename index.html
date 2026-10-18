@@ -237,6 +237,11 @@ camera.lookAt(player.position);
 let coins = 0;
 const keys = {};
 
+// Состояние ходьбы и рубки: нужно инициализировать до первого кадра игры.
+let walkTime = 0;
+let chopCooldown = 0;
+let chopping = false;
+
 // Поворот камеры мышью на компьютере или пальцем на телефоне
 let draggingCamera = false;
 let lastPointerX = 0;
