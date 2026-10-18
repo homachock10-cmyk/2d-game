@@ -15,6 +15,7 @@ body {
     display: block;
     width: 100vw;
     height: 100vh;
+    touch-action: none;
 }
 #hud {
     position: fixed;
@@ -180,11 +181,43 @@ player.add(head);
 scene.add(player);
 player.position.set(0, 0, 0);
 
+let cameraYaw = 0;
+let cameraPitch = 0.46;
+const cameraDistance = 9;
 camera.position.set(0, 5, 8);
 camera.lookAt(player.position);
 
 let coins = 0;
 const keys = {};
+
+// Поворот камеры мышью на компьютере или пальцем на телефоне
+let draggingCamera = false;
+let lastPointerX = 0;
+let lastPointerY = 0;
+
+renderer.domElement.addEventListener("pointerdown", e => {
+    draggingCamera = true;
+    lastPointerX = e.clientX;
+    lastPointerY = e.clientY;
+    renderer.domElement.setPointerCapture(e.pointerId);
+});
+
+renderer.domElement.addEventListener("pointermove", e => {
+    if (!draggingCamera) return;
+    const dx = e.clientX - lastPointerX;
+    const dy = e.clientY - lastPointerY;
+    lastPointerX = e.clientX;
+    lastPointerY = e.clientY;
+
+    cameraYaw -= dx * 0.008;
+    cameraPitch = Math.max(0.12, Math.min(1.05, cameraPitch + dy * 0.005));
+});
+
+function stopCameraDrag() {
+    draggingCamera = false;
+}
+renderer.domElement.addEventListener("pointerup", stopCameraDrag);
+renderer.domElement.addEventListener("pointercancel", stopCameraDrag);
 
 function bindButton(id, key) {
     const button = document.getElementById(id);
@@ -233,8 +266,14 @@ function animate() {
     if (keys.left) player.position.x -= speed;
     if (keys.right) player.position.x += speed;
 
-    camera.position.x += (player.position.x - camera.position.x) * 0.08;
-    camera.position.z += (player.position.z + 8 - camera.position.z) * 0.08;
+    const horizontalDistance = Math.cos(cameraPitch) * cameraDistance;
+    const targetCameraX = player.position.x + Math.sin(cameraYaw) * horizontalDistance;
+    const targetCameraY = 1 + Math.sin(cameraPitch) * cameraDistance;
+    const targetCameraZ = player.position.z + Math.cos(cameraYaw) * horizontalDistance;
+
+    camera.position.x += (targetCameraX - camera.position.x) * 0.12;
+    camera.position.y += (targetCameraY - camera.position.y) * 0.12;
+    camera.position.z += (targetCameraZ - camera.position.z) * 0.12;
     camera.lookAt(player.position.x, 1, player.position.z);
 
     renderer.render(scene, camera);
