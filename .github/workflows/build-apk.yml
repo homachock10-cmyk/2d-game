@@ -30,8 +30,7 @@ jobs:
             cp index.html app/src/main/assets/index.html
           fi
           
-          curl -fL https://unpkg.com/three@0.160.0/build/three.min.js -o 
-          app/src/main/assets/three.min.js
+          curl -fL https://unpkg.com/three@0.160.0/build/three.min.js -o app/src/main/assets/three.min.js
           
           cat > settings.gradle <<'EOF'
           pluginManagement {
