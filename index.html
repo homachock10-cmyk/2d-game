@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Adventure RPG 3D</title>
 <style>
+html, body, body * {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+}
 body {
     margin: 0;
     overflow: hidden;
@@ -76,6 +82,13 @@ button {
 
 <script src="./three.min.js"></script>
 <script>
+// Усложняем случайное копирование содержимого интерфейса игры.
+document.addEventListener("contextmenu", event => event.preventDefault());
+document.addEventListener("selectstart", event => event.preventDefault());
+document.addEventListener("dragstart", event => event.preventDefault());
+document.addEventListener("copy", event => event.preventDefault());
+document.addEventListener("cut", event => event.preventDefault());
+
 if (typeof THREE === "undefined") {
     document.body.innerHTML = `
         <div style="color:white;background:#172333;padding:25px;font-family:Arial">
