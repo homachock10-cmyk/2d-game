@@ -25,6 +25,31 @@ jobs:
           mkdir -p app/src/main/assets
           mkdir -p app/src/main/java/com/example/rpg
           mkdir -p app/src/main/res/values
+          mkdir -p app/src/main/res/mipmap-mdpi app/src/main/res/mipmap-hdpi app/src/main/res/mipmap-xhdpi app/src/main/res/mipmap-xxhdpi app/src/main/res/mipmap-xxxhdpi
+
+          # Create a crisp pixel-style launcher icon with the letters RPG.
+          python3 -m pip install --quiet Pillow
+          python3 - <<'PY'
+          from PIL import Image, ImageDraw, ImageFont
+          import os
+          sizes = {'mdpi':48, 'hdpi':72, 'xhdpi':96, 'xxhdpi':144, 'xxxhdpi':192}
+          for density, size in sizes.items():
+              im = Image.new('RGB', (size, size), '#172b38')
+              d = ImageDraw.Draw(im)
+              # Pixel-art green field and gold frame.
+              unit = max(2, size // 24)
+              d.rectangle((unit, unit, size-unit-1, size-unit-1), fill='#26334b', outline='#f5d46c', width=max(2, size//24))
+              d.rectangle((unit*2, int(size*.68), size-unit*2, size-unit*2), fill='#397747')
+              for x,y,col in [(0.18,0.72,'#6ba95b'),(0.34,0.82,'#8cc66a'),(0.68,0.75,'#6ba95b'),(0.82,0.84,'#8cc66a')]:
+                  xx,yy=int(size*x),int(size*y)
+                  d.rectangle((xx,yy,xx+unit*2,yy+unit*2), fill=col)
+              font_path='/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
+              font=ImageFont.truetype(font_path, int(size*.34))
+              box=d.textbbox((0,0),'RPG',font=font,stroke_width=max(1,size//80))
+              tw,th=box[2]-box[0],box[3]-box[1]
+              d.text(((size-tw)//2, int(size*.23)-box[1]),'RPG',font=font,fill='#fff2c5',stroke_width=max(1,size//80),stroke_fill='#743e38')
+              im.save(f'app/src/main/res/mipmap-{density}/ic_launcher.png')
+          PY
 
           if [ -f index.html ]; then
             cp index.html app/src/main/assets/index.html
@@ -84,7 +109,7 @@ jobs:
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <application
                   android:theme="@android:style/Theme.Material.Light.NoActionBar"
-                  android:label="Adventure RPG"
+                  android:label="RPG"\n                  android:icon="@mipmap/ic_launcher"
                   android:usesCleartextTraffic="true">
                   <activity
                       android:name=".MainActivity"
