@@ -280,7 +280,25 @@ let walkTime = 0;
 let chopCooldown = 0;
 let chopping = false;
 
-// Камера закреплена за персонажем; касание игрового мира не вращает и не приближает её.
+// Камера вращается вокруг персонажа только по горизонтали.
+// Приближение и изменение наклона отключены.
+let draggingCamera = false;
+let lastPointerX = 0;
+renderer.domElement.addEventListener("pointerdown", e => {
+    if (e.target !== renderer.domElement) return;
+    draggingCamera = true;
+    lastPointerX = e.clientX;
+    renderer.domElement.setPointerCapture(e.pointerId);
+});
+renderer.domElement.addEventListener("pointermove", e => {
+    if (!draggingCamera) return;
+    const dx = e.clientX - lastPointerX;
+    lastPointerX = e.clientX;
+    cameraYaw -= dx * 0.008;
+});
+function stopCameraDrag() { draggingCamera = false; }
+renderer.domElement.addEventListener("pointerup", stopCameraDrag);
+renderer.domElement.addEventListener("pointercancel", stopCameraDrag);
 
 function bindButton(id, key) {
     const button = document.getElementById(id);
