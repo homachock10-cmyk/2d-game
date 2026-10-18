@@ -24,7 +24,7 @@ button{font-family:monospace;font-weight:bold;color:#fff5cf;background:#344f8b;b
 #closeShop{display:block;width:100%;height:42px;margin-top:10px;background:#91453b}
 @media(min-width:800px){#controls{left:20px;bottom:20px}#hud{font-size:14px}#hint{font-size:15px}}
 
-#game{visibility:hidden}#scene3d{position:fixed;inset:0;width:100vw;height:100vh;display:none;z-index:0;touch-action:none}#hud,#controls,.action,#hint{visibility:hidden}
+#game{visibility:visible}#scene3d{position:fixed;inset:0;width:100vw;height:100vh;display:none;visibility:hidden;z-index:0;touch-action:none}#hud,#controls,.action,#hint{visibility:hidden}
 .screen{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;overflow:auto;padding:18px;background:linear-gradient(#101d36dd,#172b38f2);color:#fff2c5;text-align:center}.screen.hidden{display:none}
 .menu-card{width:min(520px,96vw);max-height:94vh;overflow:auto;padding:16px;background:#26334b;border:4px solid #f5d46c;box-shadow:7px 7px #10151f}
 .game-art{display:block;width:min(100%,420px);height:auto;margin:0 auto 12px;image-rendering:pixelated;border:3px solid #f5d46c;background:#6ba95b}
@@ -185,7 +185,7 @@ init3D();
 
 function frame(){requestAnimationFrame(frame);if(!gameStarted)return;const oldTick=dayTick;dayTick=(dayTick+1/60)%120;if(dayTick<oldTick){calendarDay++;if(calendarDay>30){calendarDay=1;calendarMonth++;if(calendarMonth>=12){calendarMonth=0;calendarYear++}}seasonDay++}const season=seasonNow();document.getElementById('day').textContent=(dayTick>72?'Ночь':'День')+' · '+season.emoji+' '+season.name;document.getElementById('calendarDate').textContent='📅 '+calendarDate();let mvx=(keys.right?1:0)-(keys.left?1:0),mvy=(keys.down?1:0)-(keys.up?1:0);if(mvx||mvy){const ca=Math.cos(cam),sa=Math.sin(cam),nx=mvx*ca-mvy*sa,ny=mvx*sa+mvy*ca,s=player.boots?2.3:1.7;if(homeInterior){player.x=Math.max(28,Math.min(452,player.x+nx*s));player.y=Math.max(45,Math.min(238,player.y+ny*s))}else{const nextX=Math.max(18,Math.min(world.w-18,player.x+nx*s)),nextY=Math.max(28,Math.min(world.h-20,player.y+ny*s));if(!blockedByHouse(nextX,player.y))player.x=nextX;if(!blockedByHouse(player.x,nextY))player.y=nextY}player.walk+=.23;player.dir=Math.atan2(ny,nx)}if(player.chop>0)player.chop=Math.max(0,player.chop-.085);
 for(const a of animals){a.t++;if(a.t%90===0)a.dir+=(Math.random()-.5)*2;a.x+=Math.cos(a.dir)*.22;a.y+=Math.sin(a.dir)*.22;if(a.x<20||a.x>1180||a.y<20||a.y>880)a.dir+=Math.PI}
-const scale=Math.min(W/innerWidth*1.3,H/innerHeight*1.3);ctx.fillStyle='#7fb95d';ctx.fillRect(0,0,W,H);const night=dayTick>72;if(homeInterior){document.getElementById('scene3d').style.display='none';canvas.style.visibility='visible';drawInterior();if(night){ctx.fillStyle='#17163b44';ctx.fillRect(0,0,W,H)}return}else{canvas.style.visibility='hidden';document.getElementById('scene3d').style.display='block'}ctx.save();ctx.translate(W/2,H/2);ctx.rotate(-cam);ctx.translate(-player.x,-player.y);
+const scale=Math.min(W/innerWidth*1.3,H/innerHeight*1.3);ctx.fillStyle='#7fb95d';ctx.fillRect(0,0,W,H);const night=dayTick>72;if(homeInterior){document.getElementById('scene3d').style.display='none';canvas.style.visibility='visible';drawInterior();if(night){ctx.fillStyle='#17163b44';ctx.fillRect(0,0,W,H)}return}else{canvas.style.visibility='visible';document.getElementById('scene3d').style.display='none'}ctx.save();ctx.translate(W/2,H/2);ctx.rotate(-cam);ctx.translate(-player.x,-player.y);
 rect(0,0,world.w,world.h,seasonNow().ground);
 // Long cobbled road through the town and a square.
 rect(620,185,390,470,'#bca77c');rect(625,205,380,430,'#cbb68a');for(let y=210;y<640;y+=18)for(let x=635;x<1000;x+=22)rect(x+((y/18|0)%2)*10,y,17,2,'#aa956d');
@@ -197,7 +197,6 @@ ctx.restore();
 const seasonIndex=months[calendarMonth].season;if(seasonIndex===2){for(let i=0;i<18;i++){const x=(i*83+Math.floor(dayTick*1.7)+seasonDay*31)%W,y=(i*47+Math.floor(dayTick*2.1))%H;rect(x,y,3,2,i%2?'#e9a04d':'#c85d36')}}else if(seasonIndex===3){for(let i=0;i<34;i++){const x=(i*67+Math.floor(dayTick*.7))%W,y=(i*41+Math.floor(dayTick*1.4))%H;rect(x,y,2,3,'#f1f7fa')}}else if(seasonIndex===0){for(let i=0;i<14;i++){const x=(i*71+Math.floor(dayTick*.6))%W,y=(i*37+Math.floor(dayTick*.8))%H;rect(x,y,2,2,'#f3c4dc')}}
 const shop=nearBuilding(),home=nearHome();if(shop&&!nearShop){say('Рядом '+shop.name+' — нажми «Магазин»!')}if(home&&!nearShop){say('Ты у дома — нажми «Магазин», чтобы войти!')}nearShop=!!(shop||home);
 
-render3D();
 }
 frame();updateHud();
 })();
