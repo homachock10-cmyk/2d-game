@@ -37,7 +37,7 @@ button{font-family:monospace;font-weight:bold;color:#fff5cf;background:#344f8b;b
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d',{alpha:false});
 const W=480,H=270,world={w:1200,h:900};let dpr=1;
 function resize(){canvas.width=W;canvas.height=H;canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px'}addEventListener('resize',resize);resize();
-const player={x:145,y:430,dir:0,walk:0,chop:0,health:100,coins:0,axe:1,potions:0,seeds:0,boots:false,coat:false};
+const player={x:145,y:430,dir:0,walk:0,chop:0,health:100,coins:0,axe:1,potions:0,seeds:0,boots:false,coat:false,luckyCharm:false,backpack:false,lamp:false,sword:false};
 const keys={};let cam=0,drag=false,lastX=0,dayTick=0,messageTimer=0,nearShop=false;
 const trees=[],animals=[],buildings=[];
 function building(x,y,w,h,wall,roof,name,kind){buildings.push({x,y,w,h,wall,roof,name,kind})}
@@ -51,6 +51,16 @@ building(910,370,78,62,'#c5d6e9','#5b719b','Дом','home');
 building(670,500,78,62,'#e9d39b','#a74338','Дом','home');
 building(790,500,78,62,'#d7b37a','#4d6c9d','Дом','home');
 building(910,500,78,62,'#e2b4c6','#a34c7a','Дом','home');
+building(535,245,70,56,'#e6bd87','#8b4c36','Кузница','blacksmith');
+building(535,365,70,56,'#c9dda1','#4b7c3f','Травница','herbalist');
+building(1015,245,70,56,'#edc5a3','#9b5142','Портной','tailor');
+building(1015,365,70,56,'#dfc68f','#73513d','Таверна','inn');
+building(535,500,70,56,'#d4b5e8','#6550a1','Рынок','market');
+building(1015,500,70,56,'#a8d8db','#477b91','Гостевой дом','inn');
+building(625,625,76,58,'#e9d39b','#a74338','Дом','home');
+building(730,625,76,58,'#d7b37a','#4d6c9d','Дом','home');
+building(835,625,76,58,'#e2b4c6','#a34c7a','Дом','home');
+building(940,625,76,58,'#c9dda1','#4b7c3f','Дом','home');
 for(let i=0;i<56;i++){let x=35+Math.random()*1120,y=35+Math.random()*800;if(x>620&&x<1010&&y>190&&y<590)continue;if(Math.hypot(x-145,y-430)<90)continue;trees.push({x,y,hits:0,alive:true,phase:Math.random()*6})}
 for(let i=0;i<12;i++)animals.push({x:80+Math.random()*1000,y:80+Math.random()*700,dir:Math.random()*6.28,t:Math.random()*100,type:i%2?'rabbit':'sheep'});
 const products=[
@@ -59,18 +69,24 @@ const products=[
 {id:'boots',name:'🥾 Быстрые сапоги',price:20,desc:'Быстрее ходить',buy(){if(player.boots)return 'Сапоги уже куплены';player.boots=true;return 'Теперь ты быстрее!'}},
 {id:'coat',name:'🧥 Плащ героя',price:25,desc:'Новый вид персонажа',buy(){if(player.coat)return 'Плащ уже куплен';player.coat=true;return 'Плащ надет!'}},
 {id:'seeds',name:'🌱 Семена',price:5,desc:'Для будущего сада',buy(){player.seeds+=1;return 'Семена добавлены в рюкзак: '+player.seeds}},
-{id:'meal',name:'🍞 Походная еда',price:6,desc:'Восстанавливает здоровье',buy(){if(player.health>=100)return 'Здоровье уже полное';player.health=Math.min(100,player.health+18);return 'Ты перекусил!'}}
+{id:'meal',name:'🍞 Походная еда',price:6,desc:'+18 здоровья',buy(){if(player.health>=100)return 'Здоровье уже полное';player.health=Math.min(100,player.health+18);return 'Ты перекусил!'}},
+{id:'bigpotion',name:'🧪 Большое зелье',price:18,desc:'+60 здоровья',buy(){if(player.health>=100)return 'Здоровье уже полное';player.health=Math.min(100,player.health+60);return 'Большое зелье выпито!'}},
+{id:'apple',name:'🍎 Золотое яблоко',price:12,desc:'+40 здоровья',buy(){if(player.health>=100)return 'Здоровье уже полное';player.health=Math.min(100,player.health+40);return 'Яблоко съедено!'}},
+{id:'charm',name:'🍀 Талисман удачи',price:28,desc:'+2 монеты за дерево',buy(){if(player.luckyCharm)return 'Талисман уже куплен';player.luckyCharm=true;return 'Талисман приносит удачу!'}},
+{id:'backpack',name:'🎒 Большой рюкзак',price:22,desc:'+3 монеты за дерево',buy(){if(player.backpack)return 'Рюкзак уже куплен';player.backpack=true;return 'Рюкзак теперь с тобой!'}},
+{id:'lamp',name:'🏮 Ночная лампа',price:16,desc:'Светлее ночью',buy(){if(player.lamp)return 'Лампа уже куплена';player.lamp=true;return 'Лампа освещает путь ночью!'}},
+{id:'sword',name:'⚔️ Меч путешественника',price:35,desc:'Пиксельное оружие',buy(){if(player.sword)return 'Меч уже куплен';player.sword=true;return 'Меч экипирован!'}}
 ];
 const goods=document.getElementById('goods');
-function renderGoods(list){goods.replaceChildren();list.forEach(p=>{const button=document.createElement('button');button.innerHTML=p.name+'<br>'+p.desc+'<br>🪙 '+p.price;button.addEventListener('click',()=>{if(player.coins<p.price){say('Не хватает монет!');return}const msg=p.buy();if(msg.includes('уже')||msg.includes('полное')){say(msg);return}player.coins-=p.price;updateHud();say(msg)});goods.appendChild(button)})}
-const stock={shop:[products[0],products[3]],potion:[products[1],products[5]],gear:[products[2],products[3]],food:[products[5],products[4]]};
+function renderGoods(list){goods.replaceChildren();list.forEach(p=>{const button=document.createElement('button');button.innerHTML=p.name+'<br>'+p.desc+'<br>🪙 '+p.price;button.addEventListener('click',()=>{if(player.coins<p.price){say('Не хватает монет!');return}const msg=p.buy();if(/уже|полное/i.test(msg)){say(msg);updateHud();return}player.coins-=p.price;updateHud();say(msg)});goods.appendChild(button)})}
+const stock={shop:[products[0],products[11],products[3]],potion:[products[1],products[6],products[7],products[5]],gear:[products[2],products[3],products[10],products[11]],food:[products[5],products[4],products[7]],blacksmith:[products[0],products[11],products[10]],herbalist:[products[1],products[6],products[7],products[4]],tailor:[products[3],products[2],products[9]],inn:[products[5],products[7],products[4]],market:[products[4],products[5],products[8],products[9]]};
 function updateHud(){document.getElementById('coins').textContent=player.coins;document.getElementById('shopCoins').textContent=player.coins;document.getElementById('health').textContent=player.health;document.getElementById('axeStatus').textContent=player.axe>1?'улучшенный':'обычный'}
 function say(t){const e=document.getElementById('hint');e.textContent=t;e.style.display='block';clearTimeout(messageTimer);messageTimer=setTimeout(()=>e.style.display='none',1800)}
 function nearBuilding(){return buildings.find(b=>b.kind!=='home'&&Math.hypot(player.x-(b.x+b.w/2),player.y-(b.y+b.h+12))<92)}
 function openShop(){const b=nearBuilding();if(!b){say('Подойди к одной из городских лавок!');return}document.querySelector('#shopPanel h2').textContent='🏪 '+b.name.toUpperCase();renderGoods(stock[b.kind]||products);document.getElementById('shopPanel').style.display='block';updateHud()}
 document.getElementById('interact').addEventListener('click',openShop);document.getElementById('closeShop').addEventListener('click',()=>document.getElementById('shopPanel').style.display='none');
 document.getElementById('sleep').addEventListener('click',()=>{if(Math.hypot(player.x-140,player.y-425)>90){say('Подойди к своему дому, чтобы поспать');return}dayTick=0;player.health=100;updateHud();say('Ты отдохнул. Началось утро!')});
-function chop(){if(player.chop>0)return;let t=null,dist=1e9;for(const a of trees){let d=Math.hypot(player.x-a.x,player.y-a.y);if(a.alive&&d<dist){dist=d;t=a}}if(!t||dist>52){say('Подойди ближе к дереву!');return}player.chop=1;t.hits++;if(t.hits>=(player.axe>1?2:3)){t.alive=false;player.coins+=5;updateHud();say('Дерево срублено: +5 монет!')}else say('Удар топором '+t.hits+'/'+(player.axe>1?2:3))}
+function chop(){if(player.chop>0)return;let t=null,dist=1e9;for(const a of trees){let d=Math.hypot(player.x-a.x,player.y-a.y);if(a.alive&&d<dist){dist=d;t=a}}if(!t||dist>52){say('Подойди ближе к дереву!');return}player.chop=1;t.hits++;if(t.hits>=(player.axe>1?2:3)){t.alive=false;const reward=5+(player.luckyCharm?2:0)+(player.backpack?3:0);player.coins+=reward;updateHud();say('Дерево срублено: +'+reward+' монет!')}else say('Удар топором '+t.hits+'/'+(player.axe>1?2:3))}
 document.getElementById('chop').addEventListener('click',chop);
 function bind(id,key){const b=document.getElementById(id);b.addEventListener('pointerdown',e=>{e.preventDefault();keys[key]=true;b.setPointerCapture?.(e.pointerId)});for(const ev of ['pointerup','pointercancel','pointerleave'])b.addEventListener(ev,()=>keys[key]=false)}
 bind('up','up');bind('down','down');bind('left','left');bind('right','right');
@@ -81,9 +97,9 @@ canvas.addEventListener('pointermove',e=>{if(!drag)return;cam+=(e.clientX-lastX)
 function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),w,h)}
 function pixelText(t,x,y,c='#fff'){ctx.fillStyle=c;ctx.font='7px monospace';ctx.textAlign='center';ctx.fillText(t,Math.round(x),Math.round(y))}
 function drawTree(t){if(!t.alive)return;let x=t.x,y=t.y;rect(x-4,y-4,8,13,'#79502d');rect(x-12,y-21,24,18,'#246b3b');rect(x-9,y-26,18,10,'#39894a');rect(x-5,y-29,10,6,'#57a44b');rect(x-9,y-20,5,5,'#69b955');}
-function drawHouse(b){const x=b.x,y=b.y;rect(x+4,y+12,b.w,b.h,'#70533e');rect(x,y+7,b.w,b.h,b.wall);rect(x-5,y,b.w+10,19,b.roof);rect(x+b.w/2-7,y+b.h+2,14,23,'#71462e');rect(x+9,y+23,13,12,'#75c9df');rect(x+b.w-22,y+23,13,12,'#75c9df');rect(x+10,y+24,11,2,'#d9f4ff');rect(x+b.w-21,y+24,11,2,'#d9f4ff');if(b.kind!=='home'){rect(x+12,y+3,b.w-24,9,'#ffe27a');pixelText(b.kind==='shop'?'SHOP':b.kind==='potion'?'POTIONS':b.kind==='gear'?'GEAR':'BAKE',x+b.w/2,y+10,'#513325')}}
+function drawHouse(b){const x=b.x,y=b.y;rect(x+4,y+12,b.w,b.h,'#70533e');rect(x,y+7,b.w,b.h,b.wall);rect(x-5,y,b.w+10,19,b.roof);rect(x+b.w/2-7,y+b.h+2,14,23,'#71462e');rect(x+9,y+23,13,12,'#75c9df');rect(x+b.w-22,y+23,13,12,'#75c9df');rect(x+10,y+24,11,2,'#d9f4ff');rect(x+b.w-21,y+24,11,2,'#d9f4ff');if(b.kind!=='home'){rect(x+12,y+3,b.w-24,9,'#ffe27a');const labels={shop:'AXE',potion:'POTIONS',gear:'GEAR',food:'BAKE',blacksmith:'FORGE',herbalist:'HERBS',tailor:'CLOTH',inn:'INN',market:'MARKET'};pixelText(labels[b.kind]||'SHOP',x+b.w/2,y+10,'#513325');if(b.kind==='shop'||b.kind==='blacksmith')rect(x+b.w/2-12,y+b.h+10,24,3,'#c4d0d8')}}
 function drawAnimal(a){let x=a.x,y=a.y;rect(x-7,y-4,14,8,a.type==='sheep'?'#eee9d8':'#9c714c');rect(x+4,y-7,6,6,a.type==='sheep'?'#eee9d8':'#9c714c');rect(x+5,y-3,2,2,'#24232b');rect(x-5,y+3,2,4,'#514334');rect(x+4,y+3,2,4,'#514334');if(a.type==='rabbit'){rect(x+4,y-13,2,7,'#9c714c');rect(x+8,y-12,2,6,'#9c714c')}}
-function drawPlayer(){const x=player.x,y=player.y,step=Math.sin(player.walk)*3,sw=player.chop>0?Math.sin(player.chop*Math.PI)*10:Math.sin(player.walk)*3;rect(x-6,y-19,12,6,player.coat?'#9a3d91':'#56392a');rect(x-7,y-13,14,14,player.coat?'#a84d9e':'#326bd5');rect(x-9,y-12,3,10,'#ffca98');rect(x+6,y-12,3,10,'#ffca98');rect(x-6,y+1,5,10+step,'#263c68');rect(x+2,y+1,5,10-step,'#263c68');rect(x-7,y-25,14,12,'#ffca98');rect(x-8,y-27,16,5,'#56392a');rect(x-4,y-21,2,2,'#29212a');rect(x+3,y-21,2,2,'#29212a');rect(x+7,y-10+sw,3,10,'#ffca98');rect(x+8,y-2+sw,3,8,'#79502d');rect(x+10,y-5+sw,7,4,'#c5d0d8');}
+function drawPlayer(){const x=Math.round(player.x),y=Math.round(player.y),step=Math.round(Math.sin(player.walk)*2),swing=player.chop>0?Math.round(Math.sin(player.chop*Math.PI)*8):Math.round(Math.sin(player.walk)*2);const left=player.dir>Math.PI/2||player.dir< -Math.PI/2;const front=Math.abs(player.dir)>Math.PI/4&&Math.abs(player.dir)<Math.PI*3/4;const skin='#ffca98',hair='#56392a',shirt=player.coat?'#a84d9e':'#326bd5',pants='#263c68';rect(x-5,y-19,10,5,hair);rect(x-6,y-14,12,13,shirt);rect(x-8,y-12,3,8,skin);rect(x+5,y-12,3,8,skin);rect(x-5,y+1,4,9+step,pants);rect(x+1,y+1,4,9-step,pants);rect(x-6,y-26,12,12,skin);rect(x-7,y-28,14,5,hair);rect(x-7,y-23,3,4,hair);rect(x+4,y-23,3,4,hair);if(!front){const eyeX=left?x-3:x+2;rect(eyeX,y-21,2,2,'#29212a');if(player.coat)rect(x-6,y-13,12,3,'#e4c3ef')}else{rect(x-4,y-21,2,2,'#29212a');rect(x+2,y-21,2,2,'#29212a')}const armX=left?x-9:x+6;rect(armX,y-11-swing,3,9+Math.min(0,swing),skin);if(player.chop>0){rect(armX-1,y-4-swing,4,8,'#79502d');rect(armX-3,y-8-swing,9,4,'#c5d0d8');rect(armX-3,y-9-swing,4,2,'#edf4fa')}else if(player.sword){rect(armX+(left?-4:2),y-9,3,9,'#c5d0d8');rect(armX+(left?-5:1),y-2,5,2,'#b98a45')}if(player.lamp&&dayTick>72){rect(x-2,y-32,4,4,'#ffe27a');rect(x-1,y-31,2,2,'#fff6b0')}}
 function frame(){requestAnimationFrame(frame);dayTick=(dayTick+1/60)%120;document.getElementById('day').textContent=dayTick>72?'Ночь':'День';let mvx=(keys.right?1:0)-(keys.left?1:0),mvy=(keys.down?1:0)-(keys.up?1:0);if(mvx||mvy){const ca=Math.cos(cam),sa=Math.sin(cam),nx=mvx*ca-mvy*sa,ny=mvx*sa+mvy*ca,s=player.boots?2.3:1.7;player.x=Math.max(18,Math.min(world.w-18,player.x+nx*s));player.y=Math.max(28,Math.min(world.h-20,player.y+ny*s));player.walk+=.23;player.dir=Math.atan2(ny,nx)}if(player.chop>0)player.chop=Math.max(0,player.chop-.085);
 for(const a of animals){a.t++;if(a.t%90===0)a.dir+=(Math.random()-.5)*2;a.x+=Math.cos(a.dir)*.22;a.y+=Math.sin(a.dir)*.22;if(a.x<20||a.x>1180||a.y<20||a.y>880)a.dir+=Math.PI}
 const scale=Math.min(W/innerWidth*1.3,H/innerHeight*1.3);ctx.fillStyle='#7fb95d';ctx.fillRect(0,0,W,H);const night=dayTick>72;ctx.save();ctx.translate(W/2,H/2);ctx.rotate(-cam);ctx.translate(-player.x,-player.y);
@@ -92,7 +108,7 @@ rect(0,0,world.w,world.h,'#77b65c');
 rect(620,185,390,470,'#bca77c');rect(625,205,380,430,'#cbb68a');for(let y=210;y<640;y+=18)for(let x=635;x<1000;x+=22)rect(x+((y/18|0)%2)*10,y,17,2,'#aa956d');
 rect(40,380,590,42,'#bca77c');rect(40,390,590,3,'#d7c59a');
 for(const b of buildings)drawHouse(b);for(const t of trees)drawTree(t);for(const a of animals)drawAnimal(a);drawPlayer();
-if(night){ctx.fillStyle='#101d4b55';ctx.fillRect(player.x-300,player.y-300,600,600)}
+if(night){ctx.fillStyle=player.lamp?'#101d4b22':'#101d4b55';ctx.fillRect(player.x-300,player.y-300,600,600)}
 ctx.restore();
 const shop=nearBuilding();if(shop&&!nearShop){say('Рядом '+shop.name+' — нажми «Магазин»!')}nearShop=!!shop;
 ctx.fillStyle='#18233b';ctx.fillRect(W-116,H-17,108,12);ctx.fillStyle='#f5d46c';ctx.font='7px monospace';ctx.textAlign='center';ctx.fillText('Проведи по экрану: камера',W-62,H-8);
