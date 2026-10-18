@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Adventure RPG 3D</title>
+<style>
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background: #87ceeb;
+}
+#game {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+}
+#hud {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    color: white;
+    background: #0009;
+    padding: 12px;
+    border-radius: 12px;
+    z-index: 2;
+}
+#controls {
+    position: fixed;
+    bottom: 25px;
+    left: 20px;
+    display: flex;
+    gap: 8px;
+    z-index: 3;
+}
+button {
+    width: 58px;
+    height: 58px;
+    border: 0;
+    border-radius: 14px;
+    color: white;
+    background: #263dba;
+    font-size: 22px;
+    touch-action: none;
+}
+#collect {
+    position: fixed;
+    right: 20px;
+    bottom: 30px;
+    width: 100px;
+    height: 65px;
+    background: #278447;
+    font-size: 15px;
+}
+</style>
+</head>
+<body>
+
+<div id="hud">
+    🌿 Adventure RPG<br>
+    ❤️ Здоровье: 100<br>
+    ⭐ Уровень: 1<br>
+    🪙 Монеты: <span id="coins">0</span>
+</div>
+
+<div id="controls">
+    <button id="left">◀</button>
+    <button id="forward">▲</button>
+    <button id="back">▼</button>
+    <button id="right">▶</button>
+</div>
+
+<button id="collect">🌳 Собрать</button>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script>
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);
+scene.fog = new THREE.Fog(0x87ceeb, 25, 100);
+
+const camera = new THREE.PerspectiveCamera(
+    70, innerWidth / innerHeight, 0.1, 200
+);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+renderer.domElement.id = "game";
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x52633b, 2));
+
+const sun = new THREE.DirectionalLight(0xffffff, 2);
+sun.position.set(10, 20, 10);
+sun.castShadow = true;
+scene.add(sun);
+
+const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(200, 200),
+    new THREE.MeshStandardMaterial({ color: 0x68a94f })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+function box(x, y, z, sx, sy, sz, color) {
+    const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(sx, sy, sz),
+        new THREE.MeshStandardMaterial({ color })
+    );
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    scene.add(mesh);
+    return mesh;
+}
+
+function tree(x, z) {
+    box(x, 1, z, 0.5, 2, 0.5, 0x76502d);
+
+    const leaves = new THREE.Mesh(
+        new THREE.ConeGeometry(1.5, 3, 6),
+        new THREE.MeshStandardMaterial({ color: 0x24743a })
+    );
+    leaves.position.set(x, 3, z);
+    leaves.castShadow = true;
+    scene.add(leaves);
+}
+
+for (let i = 0; i < 35; i++) {
+    const x = Math.random() * 70 - 35;
+    const z = Math.random() * 70 - 35;
+
+    if (Math.abs(x) > 7 || Math.abs(z) > 7) {
+        tree(x, z);
+    }
+}
+
+// Дом
+box(5, 1.5, -5, 5, 3, 5, 0xe0c49a);
+
+// Крыша
+const roof = new THREE.Mesh(
+    new THREE.ConeGeometry(4.2, 2.5, 4),
+    new THREE.MeshStandardMaterial({ color: 0x9e3e32 })
+);
+roof.position.set(5, 4, -5);
+roof.rotation.y = Math.PI / 4;
+scene.add(roof);
+
+// Персонаж
+const player = new THREE.Group();
+
+const body = new THREE.Mesh(
+    new THREE.BoxGeometry(0.8, 1.2, 0.5),
+    new THREE.MeshStandardMaterial({ color: 0x3268db })
+);
+body.position.y = 1.1;
+player.add(body);
+
+const head = new THREE.Mesh(
+    new THREE.SphereGeometry(0.38, 16, 12),
+    new THREE.MeshStandardMaterial({ color: 0xffcc99 })
+);
+head.position.y = 2;
+player.add(head);
+
+scene.add(player);
+player.position.set(0, 0, 0);
+
+camera.position.set(0, 5, 8);
+camera.lookAt(player.position);
+
+let coins = 0;
+const keys = {};
+
+function bindButton(id, key) {
+    const button = document.getElementById(id);
+
+    button.addEventListener("pointerdown", e => {
+        e.preventDefault();
+        keys[key] = true;
+    });
+
+    for (const event of ["pointerup", "pointercancel", "pointerleave"]) {
+        button.addEventListener(event, () => keys[key] = false);
+    }
+}
+
+bindButton("left", "left");
+bindButton("right", "right");
+bindButton("forward", "forward");
+bindButton("back", "back");
+
+document.addEventListener("keydown", e => {
+    if (e.key === "w" || e.key === "ArrowUp") keys.forward = true;
+    if (e.key === "s" || e.key === "ArrowDown") keys.back = true;
+    if (e.key === "a" || e.key === "ArrowLeft") keys.left = true;
+    if (e.key === "d" || e.key === "ArrowRight") keys.right = true;
+});
+
+document.addEventListener("keyup", e => {
+    if (e.key === "w" || e.key === "ArrowUp") keys.forward = false;
+    if (e.key === "s" || e.key === "ArrowDown") keys.back = false;
+    if (e.key === "a" || e.key === "ArrowLeft") keys.left = false;
+    if (e.key === "d" || e.key === "ArrowRight") keys.right = false;
+});
+
+document.getElementById("collect").addEventListener("click", () => {
+    coins++;
+    document.getElementById("coins").textContent = coins;
+});
+
+function animate() {
+    requestAnimationFrame(animate);
+
+    const speed = 0.09;
+
+    if (keys.forward) player.position.z -= speed;
+    if (keys.back) player.position.z += speed;
+    if (keys.left) player.position.x -= speed;
+    if (keys.right) player.position.x += speed;
+
+    camera.position.x += (player.position.x - camera.position.x) * 0.08;
+    camera.position.z += (player.position.z + 8 - camera.position.z) * 0.08;
+    camera.lookAt(player.position.x, 1, player.position.z);
+
+    renderer.render(scene, camera);
+}
+
+addEventListener("resize", () => {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+});
+
+animate();
+</script>
+</body>
+</html>
