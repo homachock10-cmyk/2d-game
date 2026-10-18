@@ -75,6 +75,16 @@ button {
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
+if (typeof THREE === "undefined") {
+    document.body.innerHTML = `
+        <div style="color:white;background:#172333;padding:25px;font-family:Arial">
+            <h2>Ошибка загрузки 3D</h2>
+            <p>Не удалось загрузить Three.js.</p>
+            <p>Проверь подключение к интернету.</p>
+        </div>
+    `;
+    throw new Error("Three.js не загружена");
+}
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
 scene.fog = new THREE.Fog(0x87ceeb, 25, 100);
