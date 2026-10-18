@@ -2,564 +2,102 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Adventure RPG 3D</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Adventure RPG — Pixel Town</title>
 <style>
-html, body, body * {
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
-    -webkit-tap-highlight-color: transparent;
-}
-body {
-    margin: 0;
-    overflow: hidden;
-    font-family: "Courier New", monospace;
-    background: #87ceeb;
-    image-rendering: pixelated;
-}
-#game {
-    display: block;
-    width: 100vw;
-    height: 100vh;
-    touch-action: none;
-}
-#hud {
-    position: fixed;
-    top: 12px;
-    left: 12px;
-    color: white;
-    background: #0009;
-    padding: 12px;
-    border: 3px solid #f5d77e;
-    border-radius: 0;
-    box-shadow: 4px 4px 0 #18223b;
-    font-weight: bold;
-    z-index: 2;
-}
-#controls {
-    position: fixed;
-    bottom: 25px;
-    left: 20px;
-    display: flex;
-    gap: 8px;
-    z-index: 3;
-}
-button {
-    width: 58px;
-    height: 58px;
-    border: 0;
-    border: 3px solid #ffe49a;
-    border-radius: 0;
-    box-shadow: 3px 3px 0 #17213a;
-    color: white;
-    background: #263dba;
-    font-size: 22px;
-    touch-action: none;
-}
-#sleep {
-    position: fixed;
-    right: 20px;
-    bottom: 105px;
-    width: 100px;
-    height: 52px;
-    background: #795548;
-    font-size: 14px;
-}
-#collect {
-    position: fixed;
-    right: 20px;
-    bottom: 30px;
-    width: 100px;
-    height: 65px;
-    background: #278447;
-    font-size: 14px;
-    line-height: 1.2;
-}
-#shopOpen { position:fixed; top:12px; right:12px; width:112px; height:52px; background:#9b552d; font-size:14px; z-index:4; }
-#shopPanel { display:none; position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); width:min(320px,82vw); padding:18px; color:#fff4c9; background:#25334b; border:4px solid #f6ce6d; box-shadow:6px 6px 0 #111827; z-index:10; font-family:"Courier New",monospace; text-align:center; }
-#shopPanel h2 { margin:0 0 10px; color:#ffd96a; }
-#shopPanel p { line-height:1.5; }
-#shopPanel button { width:100%; height:auto; min-height:46px; margin-top:8px; padding:8px; font-size:14px; background:#27734c; }
-#shopPanel #closeShop { background:#87423b; }
+*{box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#172b38;font-family:monospace}
+#game{display:block;width:100vw;height:100vh;image-rendering:pixelated;touch-action:none}
+#hud{position:fixed;left:8px;top:8px;background:#18233bea;color:#fff2c5;border:3px solid #f5d46c;padding:8px 10px;font-size:13px;line-height:1.55;box-shadow:3px 3px #10151f;z-index:2}
+#controls{position:fixed;left:12px;bottom:15px;display:grid;grid-template-columns:48px 48px 48px;grid-template-rows:46px 46px;gap:4px;z-index:3}
+button{font-family:monospace;font-weight:bold;color:#fff5cf;background:#344f8b;border:3px solid #f5d46c;border-radius:0;box-shadow:3px 3px #10151f;touch-action:none}
+#controls button{font-size:20px}
+#up{grid-column:2;grid-row:1}#left{grid-column:1;grid-row:2}#down{grid-column:2;grid-row:2}#right{grid-column:3;grid-row:2}
+.action{position:fixed;right:12px;width:105px;height:48px;font-size:13px;z-index:3}
+#chop{bottom:18px;background:#287445}#interact{bottom:72px;background:#9b552d}#sleep{bottom:126px;background:#654c9b}
+#hint{position:fixed;left:50%;top:14px;transform:translateX(-50%);max-width:70vw;background:#18233beF;color:#fff4c8;border:2px solid #f5d46c;padding:8px 12px;text-align:center;font-size:13px;z-index:4;display:none}
+#shopPanel{display:none;position:fixed;z-index:10;left:50%;top:50%;transform:translate(-50%,-50%);width:min(390px,90vw);max-height:82vh;overflow:auto;background:#26334b;color:#fff2c5;border:4px solid #f5d46c;box-shadow:6px 6px #10151f;padding:14px}
+#shopPanel h2{text-align:center;color:#ffdb68;margin:0 0 8px;font-size:20px}
+#shopPanel p{text-align:center;margin:5px 0 10px;font-size:13px}
+#goods{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#goods button{min-height:62px;padding:6px;background:#316b4a;font-size:12px;line-height:1.35}
+#closeShop{display:block;width:100%;height:42px;margin-top:10px;background:#91453b}
+@media(min-width:800px){#controls{left:20px;bottom:20px}#hud{font-size:14px}#hint{font-size:15px}}
 </style>
 </head>
 <body>
-
-<div id="hud">
-    🌿 Adventure RPG<br>
-    ❤️ Здоровье: 100<br>
-    ⭐ Уровень: 1<br>
-    🪙 Монеты: <span id="coins">0</span><br>
-    🌤️ Время: <span id="dayLabel">День</span>
-</div>
-
-<div id="controls">
-    <button id="left">◀</button>
-    <button id="forward">▲</button>
-    <button id="back">▼</button>
-    <button id="right">▶</button>
-</div>
-
-<button id="sleep">🛏️ Спать</button>
-<button id="collect">🪓 Рубить<br>дерево</button>
-<button id="shopOpen">🏪 Магазин</button>
-<div id="shopPanel">
-  <h2>🏪 МАГАЗИН</h2>
-  <p>Добро пожаловать в городскую лавку!</p>
-  <p>Улучшенный топор — <b>15 монет</b><br>Срубает дерево за 2 удара.</p>
-  <button id="buyAxe">Купить улучшенный топор</button>
-  <button id="closeShop">Выйти из магазина</button>
-</div>
-
-<script src="./three.min.js"></script>
+<canvas id="game" aria-label="Adventure RPG 2D"></canvas>
+<div id="hud">🗡 ADVENTURE RPG<br>❤️ Здоровье: <span id="health">100</span><br>⭐ Уровень: 1<br>🪙 Монеты: <span id="coins">0</span><br>🌤 Время: <span id="day">День</span><br>🪓 Топор: <span id="axeStatus">обычный</span></div>
+<div id="hint"></div>
+<div id="controls"><button id="up">▲</button><button id="left">◀</button><button id="down">▼</button><button id="right">▶</button></div>
+<button id="chop" class="action">🪓 Рубить</button><button id="interact" class="action">🏪 Магазин</button><button id="sleep" class="action">🛏 Спать</button>
+<div id="shopPanel"><h2>🏪 ГОРОДСКАЯ ЛАВКА</h2><p>Товары для путешественника. Монеты: <b id="shopCoins">0</b></p><div id="goods"></div><button id="closeShop">Закрыть магазин</button></div>
 <script>
-// Усложняем случайное копирование содержимого интерфейса игры.
-document.addEventListener("contextmenu", event => event.preventDefault());
-document.addEventListener("selectstart", event => event.preventDefault());
-document.addEventListener("dragstart", event => event.preventDefault());
-document.addEventListener("copy", event => event.preventDefault());
-document.addEventListener("cut", event => event.preventDefault());
-
-if (typeof THREE === "undefined") {
-    document.body.innerHTML = `
-        <div style="color:white;background:#172333;padding:25px;font-family:Arial">
-            <h2>Ошибка загрузки 3D</h2>
-            <p>Не удалось загрузить Three.js.</p>
-            <p>Проверь подключение к интернету.</p>
-        </div>
-    `;
-    throw new Error("Three.js не загружена");
+(function(){
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d',{alpha:false});
+const W=480,H=270,world={w:1200,h:900};let dpr=1;
+function resize(){canvas.width=W;canvas.height=H;canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px'}addEventListener('resize',resize);resize();
+const player={x:145,y:430,dir:0,walk:0,chop:0,health:100,coins:0,axe:1,potions:0,seeds:0,boots:false,coat:false};
+const keys={};let cam=0,drag=false,lastX=0,dayTick=0,messageTimer=0,nearShop=false;
+const trees=[],animals=[],buildings=[];
+function building(x,y,w,h,wall,roof,name,kind){buildings.push({x,y,w,h,wall,roof,name,kind})}
+building(105,360,72,58,'#d7b37a','#a74338','Дом','home');
+building(670,240,76,60,'#e5c48c','#b44a43','Лавка оружия','shop');
+building(785,240,76,60,'#d6a9df','#5545a0','Зелья','potion');
+building(900,240,76,60,'#e9d39b','#428252','Снаряжение','gear');
+building(670,370,78,62,'#e8a9a1','#a84c43','Пекарня','food');
+building(790,370,78,62,'#b7d8a3','#43794b','Дом','home');
+building(910,370,78,62,'#c5d6e9','#5b719b','Дом','home');
+building(670,500,78,62,'#e9d39b','#a74338','Дом','home');
+building(790,500,78,62,'#d7b37a','#4d6c9d','Дом','home');
+building(910,500,78,62,'#e2b4c6','#a34c7a','Дом','home');
+for(let i=0;i<56;i++){let x=35+Math.random()*1120,y=35+Math.random()*800;if(x>620&&x<1010&&y>190&&y<590)continue;if(Math.hypot(x-145,y-430)<90)continue;trees.push({x,y,hits:0,alive:true,phase:Math.random()*6})}
+for(let i=0;i<12;i++)animals.push({x:80+Math.random()*1000,y:80+Math.random()*700,dir:Math.random()*6.28,t:Math.random()*100,type:i%2?'rabbit':'sheep'});
+const products=[
+{id:'axe',name:'🪓 Улучшенный топор',price:15,desc:'Дерево за 2 удара',buy(){if(player.axe>1)return 'У тебя уже есть топор!';player.axe=2;return 'Топор улучшен!'}},
+{id:'potion',name:'❤️ Зелье здоровья',price:8,desc:'+30 здоровья',buy(){if(player.health>=100)return 'Здоровье уже полное';player.health=Math.min(100,player.health+30);return 'Здоровье восстановлено!'}},
+{id:'boots',name:'🥾 Быстрые сапоги',price:20,desc:'Быстрее ходить',buy(){if(player.boots)return 'Сапоги уже куплены';player.boots=true;return 'Теперь ты быстрее!'}},
+{id:'coat',name:'🧥 Плащ героя',price:25,desc:'Новый вид персонажа',buy(){if(player.coat)return 'Плащ уже куплен';player.coat=true;return 'Плащ надет!'}},
+{id:'seeds',name:'🌱 Семена',price:5,desc:'Для будущего сада',buy(){player.seeds+=1;return 'Семена добавлены в рюкзак: '+player.seeds}},
+{id:'meal',name:'🍞 Походная еда',price:6,desc:'Восстанавливает здоровье',buy(){if(player.health>=100)return 'Здоровье уже полное';player.health=Math.min(100,player.health+18);return 'Ты перекусил!'}}
+];
+const goods=document.getElementById('goods');
+products.forEach(p=>{const b=document.createElement('button');b.innerHTML=p.name+'<br>'+p.desc+'<br>🪙 '+p.price;b.addEventListener('click',()=>{if(player.coins<p.price){say('Не хватает монет!');return}const msg=p.buy();if(msg.includes('уже')||msg.includes('полное')){say(msg);return}player.coins-=p.price;updateHud();say(msg)});goods.appendChild(b)});
+function updateHud(){document.getElementById('coins').textContent=player.coins;document.getElementById('shopCoins').textContent=player.coins;document.getElementById('health').textContent=player.health;document.getElementById('axeStatus').textContent=player.axe>1?'улучшенный':'обычный'}
+function say(t){const e=document.getElementById('hint');e.textContent=t;e.style.display='block';clearTimeout(messageTimer);messageTimer=setTimeout(()=>e.style.display='none',1800)}
+function nearBuilding(){return buildings.find(b=>b.kind==='shop'&&Math.hypot(player.x-(b.x+b.w/2),player.y-(b.y+b.h+12))<78)}
+function openShop(){if(!nearBuilding()){say('Подойди к лавке в городе — она справа от дома!');return}document.getElementById('shopPanel').style.display='block';updateHud()}
+document.getElementById('interact').addEventListener('click',openShop);document.getElementById('closeShop').addEventListener('click',()=>document.getElementById('shopPanel').style.display='none');
+document.getElementById('sleep').addEventListener('click',()=>{if(Math.hypot(player.x-140,player.y-425)>90){say('Подойди к своему дому, чтобы поспать');return}dayTick=0;player.health=100;updateHud();say('Ты отдохнул. Началось утро!')});
+function chop(){if(player.chop>0)return;let t=null,dist=1e9;for(const a of trees){let d=Math.hypot(player.x-a.x,player.y-a.y);if(a.alive&&d<dist){dist=d;t=a}}if(!t||dist>52){say('Подойди ближе к дереву!');return}player.chop=1;t.hits++;if(t.hits>=(player.axe>1?2:3)){t.alive=false;player.coins+=5;updateHud();say('Дерево срублено: +5 монет!')}else say('Удар топором '+t.hits+'/'+(player.axe>1?2:3))}
+document.getElementById('chop').addEventListener('click',chop);
+function bind(id,key){const b=document.getElementById(id);b.addEventListener('pointerdown',e=>{e.preventDefault();keys[key]=true;b.setPointerCapture?.(e.pointerId)});for(const ev of ['pointerup','pointercancel','pointerleave'])b.addEventListener(ev,()=>keys[key]=false)}
+bind('up','up');bind('down','down');bind('left','left');bind('right','right');
+addEventListener('keydown',e=>{if(['ArrowUp','w','W'].includes(e.key))keys.up=true;if(['ArrowDown','s','S'].includes(e.key))keys.down=true;if(['ArrowLeft','a','A'].includes(e.key))keys.left=true;if(['ArrowRight','d','D'].includes(e.key))keys.right=true;if(e.key===' '){e.preventDefault();chop()}});
+addEventListener('keyup',e=>{if(['ArrowUp','w','W'].includes(e.key))keys.up=false;if(['ArrowDown','s','S'].includes(e.key))keys.down=false;if(['ArrowLeft','a','A'].includes(e.key))keys.left=false;if(['ArrowRight','d','D'].includes(e.key))keys.right=false});
+canvas.addEventListener('pointerdown',e=>{if(document.getElementById('shopPanel').style.display==='block')return;drag=true;lastX=e.clientX;canvas.setPointerCapture?.(e.pointerId)});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;cam+=(e.clientX-lastX)*0.008;lastX=e.clientX});for(const ev of ['pointerup','pointercancel'])canvas.addEventListener(ev,()=>drag=false);
+function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),w,h)}
+function pixelText(t,x,y,c='#fff'){ctx.fillStyle=c;ctx.font='7px monospace';ctx.textAlign='center';ctx.fillText(t,Math.round(x),Math.round(y))}
+function drawTree(t){if(!t.alive)return;let x=t.x,y=t.y;rect(x-4,y-4,8,13,'#79502d');rect(x-12,y-21,24,18,'#246b3b');rect(x-9,y-26,18,10,'#39894a');rect(x-5,y-29,10,6,'#57a44b');rect(x-9,y-20,5,5,'#69b955');}
+function drawHouse(b){const x=b.x,y=b.y;rect(x+4,y+12,b.w,b.h,'#70533e');rect(x,y+7,b.w,b.h,b.wall);rect(x-5,y,b.w+10,19,b.roof);rect(x+b.w/2-7,y+b.h+2,14,23,'#71462e');rect(x+9,y+23,13,12,'#75c9df');rect(x+b.w-22,y+23,13,12,'#75c9df');rect(x+10,y+24,11,2,'#d9f4ff');rect(x+b.w-21,y+24,11,2,'#d9f4ff');if(b.kind!=='home'){rect(x+12,y+3,b.w-24,9,'#ffe27a');pixelText(b.kind==='shop'?'SHOP':b.kind==='potion'?'POTIONS':b.kind==='gear'?'GEAR':'BAKE',x+b.w/2,y+10,'#513325')}}
+function drawAnimal(a){let x=a.x,y=a.y;rect(x-7,y-4,14,8,a.type==='sheep'?'#eee9d8':'#9c714c');rect(x+4,y-7,6,6,a.type==='sheep'?'#eee9d8':'#9c714c');rect(x+5,y-3,2,2,'#24232b');rect(x-5,y+3,2,4,'#514334');rect(x+4,y+3,2,4,'#514334');if(a.type==='rabbit'){rect(x+4,y-13,2,7,'#9c714c');rect(x+8,y-12,2,6,'#9c714c')}}
+function drawPlayer(){const x=player.x,y=player.y,step=Math.sin(player.walk)*3,sw=player.chop>0?Math.sin(player.chop*Math.PI)*10:Math.sin(player.walk)*3;rect(x-6,y-19,12,6,player.coat?'#9a3d91':'#56392a');rect(x-7,y-13,14,14,player.coat?'#a84d9e':'#326bd5');rect(x-9,y-12,3,10,'#ffca98');rect(x+6,y-12,3,10,'#ffca98');rect(x-6,y+1,5,10+step,'#263c68');rect(x+2,y+1,5,10-step,'#263c68');rect(x-7,y-25,14,12,'#ffca98');rect(x-8,y-27,16,5,'#56392a');rect(x-4,y-21,2,2,'#29212a');rect(x+3,y-21,2,2,'#29212a');rect(x+7,y-10+sw,3,10,'#ffca98');rect(x+8,y-2+sw,3,8,'#79502d');rect(x+10,y-5+sw,7,4,'#c5d0d8');}
+function frame(){requestAnimationFrame(frame);dayTick=(dayTick+1/60)%120;document.getElementById('day').textContent=dayTick>72?'Ночь':'День';let mvx=(keys.right?1:0)-(keys.left?1:0),mvy=(keys.down?1:0)-(keys.up?1:0);if(mvx||mvy){const ca=Math.cos(cam),sa=Math.sin(cam),nx=mvx*ca-mvy*sa,ny=mvx*sa+mvy*ca,s=player.boots?2.3:1.7;player.x=Math.max(18,Math.min(world.w-18,player.x+nx*s));player.y=Math.max(28,Math.min(world.h-20,player.y+ny*s));player.walk+=.23;player.dir=Math.atan2(ny,nx)}if(player.chop>0)player.chop=Math.max(0,player.chop-.085);
+for(const a of animals){a.t++;if(a.t%90===0)a.dir+=(Math.random()-.5)*2;a.x+=Math.cos(a.dir)*.22;a.y+=Math.sin(a.dir)*.22;if(a.x<20||a.x>1180||a.y<20||a.y>880)a.dir+=Math.PI}
+const scale=Math.min(W/innerWidth*1.3,H/innerHeight*1.3);ctx.fillStyle='#7fb95d';ctx.fillRect(0,0,W,H);const night=dayTick>72;ctx.save();ctx.translate(W/2,H/2);ctx.rotate(-cam);ctx.translate(-player.x,-player.y);
+rect(0,0,world.w,world.h,'#77b65c');
+// Long cobbled road through the town and a square.
+rect(620,185,390,470,'#bca77c');rect(625,205,380,430,'#cbb68a');for(let y=210;y<640;y+=18)for(let x=635;x<1000;x+=22)rect(x+((y/18|0)%2)*10,y,17,2,'#aa956d');
+rect(40,380,590,42,'#bca77c');rect(40,390,590,3,'#d7c59a');
+for(const b of buildings)drawHouse(b);for(const t of trees)drawTree(t);for(const a of animals)drawAnimal(a);drawPlayer();
+if(night){ctx.fillStyle='#101d4b55';ctx.fillRect(player.x-300,player.y-300,600,600)}
+ctx.restore();
+const shop=nearBuilding();if(shop&&!nearShop){say('Ты в городе! Подойди к лавке и нажми «Магазин».')}nearShop=!!shop;
+ctx.fillStyle='#18233b';ctx.fillRect(W-116,H-17,108,12);ctx.fillStyle='#f5d46c';ctx.font='7px monospace';ctx.textAlign='center';ctx.fillText('Проведи по экрану: камера',W-62,H-8);
 }
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb);
-scene.fog = new THREE.Fog(0x87ceeb, 25, 100);
-
-const camera = new THREE.PerspectiveCamera(
-    70, innerWidth / innerHeight, 0.1, 200
-);
-
-const renderer = new THREE.WebGLRenderer({ antialias: false });
-renderer.setSize(Math.max(320, Math.floor(innerWidth / 2)), Math.max(180, Math.floor(innerHeight / 2)), false);
-renderer.setPixelRatio(1);
-renderer.domElement.style.width = "100vw";
-renderer.domElement.style.height = "100vh";
-renderer.domElement.style.imageRendering = "pixelated";
-renderer.shadowMap.enabled = true;
-document.body.appendChild(renderer.domElement);
-renderer.domElement.id = "game";
-
-scene.add(new THREE.HemisphereLight(0xffffff, 0x52633b, 2));
-
-const sun = new THREE.DirectionalLight(0xffffff, 2);
-sun.position.set(10, 20, 10);
-sun.castShadow = true;
-scene.add(sun);
-
-const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(200, 200),
-    new THREE.MeshStandardMaterial({ color: 0x68a94f })
-);
-ground.rotation.x = -Math.PI / 2;
-ground.receiveShadow = true;
-scene.add(ground);
-
-function box(x, y, z, sx, sy, sz, color) {
-    const mesh = new THREE.Mesh(
-        new THREE.BoxGeometry(sx, sy, sz),
-        new THREE.MeshStandardMaterial({ color })
-    );
-    mesh.position.set(x, y, z);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    scene.add(mesh);
-    return mesh;
-}
-
-const trees = [];
-
-function tree(x, z) {
-    const trunk = box(x, 1, z, 0.5, 2, 0.5, 0x76502d);
-    const leaves = new THREE.Mesh(
-        new THREE.ConeGeometry(1.5, 3, 6),
-        new THREE.MeshStandardMaterial({ color: 0x24743a })
-    );
-    leaves.position.set(x, 3, z);
-    leaves.castShadow = true;
-    scene.add(leaves);
-    trees.push({ x, z, trunk, leaves, hits: 0 });
-}
-
-for (let i = 0; i < 35; i++) {
-    const x = Math.random() * 70 - 35;
-    const z = Math.random() * 70 - 35;
-    if (Math.abs(x) > 7 || Math.abs(z) > 7) tree(x, z);
-}
-
-// Овцы и кролики из 3D-фигур гуляют по миру.
-const animals = [];
-function makeAnimal(x, z, color, type) {
-    const animal = new THREE.Group();
-    const coat = new THREE.MeshStandardMaterial({ color });
-    const dark = new THREE.MeshStandardMaterial({ color: 0x55402b });
-    const sheep = type === "sheep";
-    const body = new THREE.Mesh(new THREE.BoxGeometry(sheep ? 1.05 : 0.65, sheep ? 0.65 : 0.4, 0.55), coat);
-    body.position.y = sheep ? 0.72 : 0.48;
-    animal.add(body);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(sheep ? 0.25 : 0.19, 10, 8), coat);
-    head.position.set(0, sheep ? 0.9 : 0.58, -0.38);
-    animal.add(head);
-    for (const lx of [-0.22, 0.22]) for (const lz of [-0.17, 0.17]) {
-        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.12, sheep ? 0.4 : 0.25, 0.12), dark);
-        leg.position.set(lx, sheep ? 0.25 : 0.18, lz);
-        animal.add(leg);
-    }
-    animal.position.set(x, 0, z);
-    scene.add(animal);
-    animals.push({ group: animal, angle: Math.random()*Math.PI*2, timer: 1+Math.random()*3, speed: 0.008+Math.random()*0.008 });
-}
-for (let i=0;i<5;i++) makeAnimal(Math.random()*24-12,Math.random()*24-12,0xf1eee3,"sheep");
-for (let i=0;i<4;i++) makeAnimal(Math.random()*24-12,Math.random()*24-12,0x9a7049,"rabbit");
-
-// Дом
-box(5, 1.5, -5, 5, 3, 5, 0xe0c49a);
-
-// Крыша
-const roof = new THREE.Mesh(
-    new THREE.ConeGeometry(4.2, 2.5, 4),
-    new THREE.MeshStandardMaterial({ color: 0x9e3e32 })
-);
-roof.position.set(5, 4, -5);
-roof.rotation.y = Math.PI / 4;
-scene.add(roof);
-
-// Город в 32-битном стиле: мощёная улица, домики, фонари и лавка.
-const road = new THREE.Mesh(new THREE.PlaneGeometry(34, 9), new THREE.MeshStandardMaterial({color:0xb6a17a}));
-road.rotation.x = -Math.PI / 2;
-road.position.set(19, 0.025, -5);
-scene.add(road);
-for (let i=0;i<7;i++) box(4+i*5, 0.06, -5, 0.16, 0.03, 0.18, 0xf5d77e);
-function townHouse(x,z,wall,roofColor) {
-    box(x,1.6,z,4.2,3.2,3.8,wall);
-    const r = new THREE.Mesh(new THREE.ConeGeometry(3.1,1.8,4),new THREE.MeshStandardMaterial({color:roofColor,flatShading:true}));
-    r.position.set(x,4,z); r.rotation.y=Math.PI/4; r.castShadow=true; scene.add(r);
-    box(x,0.9,z+1.96,0.85,1.8,0.12,0x65412c);
-    box(x-1.15,2,z+2,0.72,0.72,0.12,0x77cbe8);
-    box(x+1.15,2,z+2,0.72,0.72,0.12,0x77cbe8);
-}
-townHouse(15,-12,0xe8c78d,0xb64d3d);
-townHouse(24,-12,0xd8b6ef,0x5544a4);
-townHouse(28,1,0xf0d6a2,0x36865d);
-// Магазин с ярким навесом и вывеской.
-box(18,1.6,-1,4.8,3.2,4.2,0xe9c48c);
-box(18,3.25,1.18,5.2,0.38,0x9c3d35);
-box(18,2.95,1.43,3.4,0.55,0xffd85e);
-box(18,3.8,1.4,2.3,0.3,0x4e2e26);
-box(16.8,2.4,1.24,0.55,0.65,0x8bd4e8);
-box(19.2,2.4,1.24,0.55,0.65,0x8bd4e8);
-// Уличные фонари.
-for (const lx of [10,22,29]) {
-    box(lx,1.4,-7,0.16,2.8,0.16,0x493b35);
-    box(lx,2.9,-7,0.75,0.28,0.55,0xffd978);
-}
-// Персонаж
-const player = new THREE.Group();
-
-const body = new THREE.Mesh(
-    new THREE.BoxGeometry(0.8, 1.2, 0.5),
-    new THREE.MeshStandardMaterial({ color: 0x3268db })
-);
-body.position.y = 1.1;
-player.add(body);
-
-const head = new THREE.Mesh(
-    new THREE.SphereGeometry(0.38, 16, 12),
-    new THREE.MeshStandardMaterial({ color: 0xffcc99 })
-);
-head.position.y = 2;
-player.add(head);
-
-// Руки и ноги с шарнирами, чтобы они могли двигаться при ходьбе.
-const skinMaterial = new THREE.MeshStandardMaterial({ color: 0xffcc99 });
-const pantsMaterial = new THREE.MeshStandardMaterial({ color: 0x263b6b });
-function makeLimb(material, width, height, depth, x, y) {
-    const pivot = new THREE.Group();
-    pivot.position.set(x, y, 0);
-    const limb = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), material);
-    limb.position.y = -height / 2;
-    limb.castShadow = true;
-    pivot.add(limb);
-    player.add(pivot);
-    return pivot;
-}
-const leftArm = makeLimb(skinMaterial, 0.24, 0.72, 0.25, -0.57, 1.55);
-const rightArm = makeLimb(skinMaterial, 0.24, 0.72, 0.25, 0.57, 1.55);
-const leftLeg = makeLimb(pantsMaterial, 0.3, 0.7, 0.32, -0.23, 0.72);
-const rightLeg = makeLimb(pantsMaterial, 0.3, 0.7, 0.32, 0.23, 0.72);
-
-// Топор в правой руке.
-const axe = new THREE.Group();
-const axeHandle = new THREE.Mesh(
-    new THREE.BoxGeometry(0.09, 0.72, 0.09),
-    new THREE.MeshStandardMaterial({ color: 0x80502c })
-);
-axeHandle.position.y = -0.25;
-axe.add(axeHandle);
-const axeHead = new THREE.Mesh(
-    new THREE.BoxGeometry(0.38, 0.24, 0.12),
-    new THREE.MeshStandardMaterial({ color: 0xbfc7d1, metalness: 0.45, roughness: 0.4 })
-);
-axeHead.position.set(0.13, 0.02, 0);
-axe.add(axeHead);
-axe.position.set(0, -0.62, 0.02);
-rightArm.add(axe);
-
-scene.add(player);
-player.position.set(0, 0, 0);
-
-let cameraYaw = 0;
-const cameraPitch = 0.46;
-const cameraDistance = 9;
-camera.position.set(0, 5, 8);
-camera.lookAt(player.position);
-
-let coins = 0;
-const keys = {};
-let dayClock = 0;
-const dayLength = 120;
-
-// Состояние ходьбы и рубки: нужно инициализировать до первого кадра игры.
-let walkTime = 0;
-let chopCooldown = 0;
-let chopping = false;
-let chopAnimation = 0;
-let axeUpgrade = false;
-
-// Камера вращается вокруг персонажа только по горизонтали.
-// Приближение и изменение наклона отключены.
-let draggingCamera = false;
-let lastPointerX = 0;
-renderer.domElement.addEventListener("pointerdown", e => {
-    if (e.target !== renderer.domElement) return;
-    draggingCamera = true;
-    lastPointerX = e.clientX;
-    renderer.domElement.setPointerCapture(e.pointerId);
-});
-renderer.domElement.addEventListener("pointermove", e => {
-    if (!draggingCamera) return;
-    const dx = e.clientX - lastPointerX;
-    lastPointerX = e.clientX;
-    cameraYaw -= dx * 0.008;
-});
-function stopCameraDrag() { draggingCamera = false; }
-renderer.domElement.addEventListener("pointerup", stopCameraDrag);
-renderer.domElement.addEventListener("pointercancel", stopCameraDrag);
-
-function bindButton(id, key) {
-    const button = document.getElementById(id);
-
-    button.addEventListener("pointerdown", e => {
-        e.preventDefault();
-        keys[key] = true;
-    });
-
-    for (const event of ["pointerup", "pointercancel", "pointerleave"]) {
-        button.addEventListener(event, () => keys[key] = false);
-    }
-}
-
-bindButton("left", "left");
-bindButton("right", "right");
-bindButton("forward", "forward");
-bindButton("back", "back");
-
-document.addEventListener("keydown", e => {
-    if (e.key === "w" || e.key === "ArrowUp") keys.forward = true;
-    if (e.key === "s" || e.key === "ArrowDown") keys.back = true;
-    if (e.key === "a" || e.key === "ArrowLeft") keys.left = true;
-    if (e.key === "d" || e.key === "ArrowRight") keys.right = true;
-});
-
-document.addEventListener("keyup", e => {
-    if (e.key === "w" || e.key === "ArrowUp") keys.forward = false;
-    if (e.key === "s" || e.key === "ArrowDown") keys.back = false;
-    if (e.key === "a" || e.key === "ArrowLeft") keys.left = false;
-    if (e.key === "d" || e.key === "ArrowRight") keys.right = false;
-});
-
-document.getElementById("sleep").addEventListener("click", () => {
-    if (Math.hypot(player.position.x - 5, player.position.z + 5) > 5.5) {
-        showMessage("Подойди к дому, чтобы поспать!");
-        return;
-    }
-    dayClock = 0;
-    showMessage("Ты поспал. Наступило утро!");
-});
-
-document.getElementById("collect").addEventListener("pointerdown", e => {
-    e.preventDefault();
-    chopping = true;
-});
-for (const event of ["pointerup", "pointercancel", "pointerleave"]) {
-    document.getElementById("collect").addEventListener(event, () => chopping = false);
-}
-document.getElementById("collect").addEventListener("click", () => {
-    chopping = true;
-    chopAnimation = 0.001;
-    // Один удар топором. Дерево даёт монеты после нескольких ударов.
-    if (chopCooldown > 0) return;
-    let nearest = null;
-    let nearestDistance = Infinity;
-    for (const t of trees) {
-        const d = Math.hypot(t.x - player.position.x, t.z - player.position.z);
-        if (d < nearestDistance) { nearestDistance = d; nearest = t; }
-    }
-    if (!nearest || nearestDistance > 3.2) {
-        showMessage("Подойди ближе к дереву!");
-        return;
-    }
-    rightArm.rotation.x = -1.5;
-    rightArm.rotation.z = -0.35;
-    nearest.hits++;
-    chopCooldown = 0.45;
-    if (nearest.hits >= (axeUpgrade ? 2 : 3)) {
-        scene.remove(nearest.trunk);
-        scene.remove(nearest.leaves);
-        const index = trees.indexOf(nearest);
-        if (index !== -1) trees.splice(index, 1);
-        coins += 5;
-        document.getElementById("coins").textContent = coins;
-        showMessage("+5 монет за дерево!");
-    } else {
-        showMessage("Удар топором: " + nearest.hits + (axeUpgrade ? "/2" : "/3"));
-    }
-});
-
-// Магазин доступен рядом с городской лавкой.
-const shopPanel = document.getElementById("shopPanel");
-document.getElementById("shopOpen").addEventListener("click", () => {
-    if (Math.hypot(player.position.x - 18, player.position.z - (-1)) > 7) {
-        showMessage("Иди по дороге в город к лавке!");
-        return;
-    }
-    shopPanel.style.display = "block";
-});
-document.getElementById("closeShop").addEventListener("click", () => shopPanel.style.display = "none");
-document.getElementById("buyAxe").addEventListener("click", () => {
-    if (axeUpgrade) { showMessage("У тебя уже есть улучшенный топор!"); return; }
-    if (coins < 15) { showMessage("Нужно 15 монет. Руби деревья!"); return; }
-    coins -= 15;
-    axeUpgrade = true;
-    document.getElementById("coins").textContent = coins;
-    document.getElementById("buyAxe").textContent = "Улучшенный топор куплен ✓";
-    showMessage("Топор улучшен! Теперь нужно 2 удара.");
-});
-let messageTimer = 0;
-function showMessage(message) {
-    let el = document.getElementById("gameMessage");
-    if (!el) {
-        el = document.createElement("div");
-        el.id = "gameMessage";
-        el.style.cssText = "position:fixed;top:100px;left:50%;transform:translateX(-50%);background:#000b;color:white;padding:10px 14px;border-radius:10px;z-index:5;text-align:center;";
-        document.body.appendChild(el);
-    }
-    el.textContent = message;
-    el.style.display = "block";
-    clearTimeout(messageTimer);
-    messageTimer = setTimeout(() => el.style.display = "none", 1400);
-}
-
-function animate() {
-    requestAnimationFrame(animate);
-
-    dayClock = (dayClock + 1/60) % dayLength;
-    const nightAmount = (1 - Math.cos(dayClock/dayLength*Math.PI*2))/2;
-    const sky = new THREE.Color(0x87ceeb).lerp(new THREE.Color(0x101b38), nightAmount);
-    scene.background.copy(sky);
-    scene.fog.color.copy(sky);
-    sun.intensity = 2 - nightAmount*1.65;
-    scene.children.forEach(obj => { if (obj.isHemisphereLight) obj.intensity = 2 - nightAmount*1.35; });
-    document.getElementById("dayLabel").textContent = nightAmount > 0.62 ? "Ночь" : "День";
-
-    for (const animal of animals) {
-        animal.timer -= 1/60;
-        if (animal.timer <= 0) { animal.angle += (Math.random()-0.5)*2.2; animal.timer = 1.5+Math.random()*4; }
-        animal.group.position.x += Math.sin(animal.angle)*animal.speed;
-        animal.group.position.z += Math.cos(animal.angle)*animal.speed;
-        if (Math.abs(animal.group.position.x)>32 || Math.abs(animal.group.position.z)>32) animal.angle += Math.PI;
-        animal.group.rotation.y = Math.atan2(Math.sin(animal.angle),Math.cos(animal.angle));
-    }
-
-    const movingForward = keys.forward || keys.back;
-    const movingSideways = keys.left || keys.right;
-    const moveForward = (keys.forward ? 1 : 0) - (keys.back ? 1 : 0);
-    const moveSide = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
-    const moveLength = Math.hypot(moveForward, moveSide) || 1;
-    const speed = 0.085;
-    if (movingForward || movingSideways) {
-        const forwardX = -Math.sin(cameraYaw);
-        const forwardZ = -Math.cos(cameraYaw);
-        const rightX = Math.cos(cameraYaw);
-        const rightZ = -Math.sin(cameraYaw);
-        player.position.x += (forwardX * moveForward + rightX * moveSide) / moveLength * speed;
-        player.position.z += (forwardZ * moveForward + rightZ * moveSide) / moveLength * speed;
-        player.rotation.y = Math.atan2(
-            forwardX * moveForward + rightX * moveSide,
-            forwardZ * moveForward + rightZ * moveSide
-        );
-        walkTime += 0.16;
-        leftLeg.rotation.x = Math.sin(walkTime) * 0.65;
-        rightLeg.rotation.x = -Math.sin(walkTime) * 0.65;
-        if (!chopping) {
-            leftArm.rotation.x = -Math.sin(walkTime) * 0.5;
-            rightArm.rotation.x = Math.sin(walkTime) * 0.5;
-        }
-    } else {
-        leftLeg.rotation.x *= 0.8;
-        rightLeg.rotation.x *= 0.8;
-        if (!chopping) {
-            leftArm.rotation.x *= 0.8;
-            rightArm.rotation.x *= 0.8;
-        }
-    }
-    if (chopAnimation > 0) {
-        chopAnimation += 1/60;
-        const swing = Math.sin(Math.min(chopAnimation / 0.38, 1) * Math.PI);
-        rightArm.rotation.x = -0.25 - swing * 1.65;
-        rightArm.rotation.z = -swing * 0.42;
-        axe.rotation.z = swing * 0.28;
-        if (chopAnimation >= 0.38) {
-            chopAnimation = 0;
-            chopping = false;
-            axe.rotation.z = 0;
-        }
-    }
-    if (chopCooldown > 0) chopCooldown = Math.max(0, chopCooldown - 1 / 60);
-    if (chopCooldown === 0 && !chopping) {
-        rightArm.rotation.x *= 0.82;
-        rightArm.rotation.z *= 0.82;
-    }
-
-    const horizontalDistance = Math.cos(cameraPitch) * cameraDistance;
-    const targetCameraX = player.position.x + Math.sin(cameraYaw) * horizontalDistance;
-    const targetCameraY = 1 + Math.sin(cameraPitch) * cameraDistance;
-    const targetCameraZ = player.position.z + Math.cos(cameraYaw) * horizontalDistance;
-
-    camera.position.x += (targetCameraX - camera.position.x) * 0.12;
-    camera.position.y += (targetCameraY - camera.position.y) * 0.12;
-    camera.position.z += (targetCameraZ - camera.position.z) * 0.12;
-    camera.lookAt(player.position.x, 1, player.position.z);
-
-    renderer.render(scene, camera);
-}
-
-addEventListener("resize", () => {
-    camera.aspect = innerWidth / innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(Math.max(320, Math.floor(innerWidth / 2)), Math.max(180, Math.floor(innerHeight / 2)), false);
-});
-
-animate();
+frame();updateHud();
+})();
 </script>
 </body>
 </html>
