@@ -138,51 +138,6 @@ jobs:
           }
           EOF
 
-          cat > app/src/main/assets/index.html <<'EOF'
-          <!DOCTYPE html>
-          <html lang="ru">
-          <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <title>Adventure RPG</title>
-          <style>
-          body { margin:0; background:#172333; color:white; font-family:Arial,sans-serif; text-align:center; }
-          main { padding:24px 12px; }
-          h1 { color:#8df0a5; }
-          button { padding:14px 22px; margin:6px; border:0; border-radius:12px; background:#398b58; color:white; font-size:18px; }
-          #world { height:45vh; background:linear-gradient(#79c9e8 0 55%,#659b52 55%); border-radius:16px; position:relative; overflow:hidden; }
-          #hero { position:absolute; left:48%; top:52%; font-size:42px; }
-          #info { background:#24384b; border-radius:12px; padding:12px; margin-top:12px; }
-          </style>
-          </head>
-          <body>
-          <main>
-          <h1>🌿 Adventure RPG</h1>
-          <div id="world"><div id="hero">🧙</div></div>
-          <div id="info">❤️ Здоровье: 100 | 🪙 Монеты: <span id="coins">0</span><br>Уровень 1 · Начинающий исследователь</div>
-          <p>Добро пожаловать в свой новый мир!</p>
-          <button onclick="move(-1)">⬅️</button>
-          <button onclick="move(1)">➡️</button>
-          <button onclick="collect()">🌿 Собрать ресурс</button>
-          <p id="message">Исследуй мир и собирай ресурсы!</p>
-          </main>
-          <script>
-          let x=48, coins=0;
-          function move(dir) {
-            x=Math.max(5,Math.min(90,x+dir*5));
-            document.getElementById('hero').style.left=x+'%';
-            document.getElementById('message').textContent='Ты исследуешь окрестности...';
-          }
-          function collect() {
-            coins+=1;
-            document.getElementById('coins').textContent=coins;
-            document.getElementById('message').textContent='Ты нашёл ресурс! Собрано: '+coins;
-          }
-          </script>
-          </body>
-          </html>
-          EOF
-
       - name: Build APK
         run: |
           gradle --version
