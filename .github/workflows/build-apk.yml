@@ -111,7 +111,8 @@ jobs:
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <application
                   android:theme="@android:style/Theme.Material.Light.NoActionBar"
-                  android:label="RPG"\n                  android:icon="@mipmap/ic_launcher"
+                  android:label="RPG"
+                  android:icon="@mipmap/ic_launcher"
                   android:usesCleartextTraffic="true">
                   <activity
                       android:name=".MainActivity"
