@@ -38,7 +38,7 @@ const canvas=document.getElementById('game'),ctx=canvas.getContext('2d',{alpha:f
 const W=480,H=270,world={w:1200,h:900};let dpr=1;
 function resize(){canvas.width=W;canvas.height=H;canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px'}addEventListener('resize',resize);resize();
 const player={x:145,y:430,dir:0,walk:0,chop:0,health:100,coins:0,axe:1,potions:0,seeds:0,boots:false,coat:false,luckyCharm:false,backpack:false,lamp:false,sword:false};
-const keys={};let cam=0,drag=false,lastX=0,dayTick=0,messageTimer=0,nearShop=false;
+const keys={};const cam=0;let dayTick=0,messageTimer=0,nearShop=false;
 const trees=[],animals=[],buildings=[];
 function building(x,y,w,h,wall,roof,name,kind){buildings.push({x,y,w,h,wall,roof,name,kind})}
 building(105,360,72,58,'#d7b37a','#a74338','Дом','home');
@@ -92,8 +92,7 @@ function bind(id,key){const b=document.getElementById(id);b.addEventListener('po
 bind('up','up');bind('down','down');bind('left','left');bind('right','right');
 addEventListener('keydown',e=>{if(['ArrowUp','w','W'].includes(e.key))keys.up=true;if(['ArrowDown','s','S'].includes(e.key))keys.down=true;if(['ArrowLeft','a','A'].includes(e.key))keys.left=true;if(['ArrowRight','d','D'].includes(e.key))keys.right=true;if(e.key===' '){e.preventDefault();chop()}});
 addEventListener('keyup',e=>{if(['ArrowUp','w','W'].includes(e.key))keys.up=false;if(['ArrowDown','s','S'].includes(e.key))keys.down=false;if(['ArrowLeft','a','A'].includes(e.key))keys.left=false;if(['ArrowRight','d','D'].includes(e.key))keys.right=false});
-canvas.addEventListener('pointerdown',e=>{if(document.getElementById('shopPanel').style.display==='block')return;drag=true;lastX=e.clientX;canvas.setPointerCapture?.(e.pointerId)});
-canvas.addEventListener('pointermove',e=>{if(!drag)return;cam+=(e.clientX-lastX)*0.008;lastX=e.clientX});for(const ev of ['pointerup','pointercancel'])canvas.addEventListener(ev,()=>drag=false);
+// Камера неподвижна: касания игрового поля больше не вращают сцену.
 function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),w,h)}
 function pixelText(t,x,y,c='#fff'){ctx.fillStyle=c;ctx.font='7px monospace';ctx.textAlign='center';ctx.fillText(t,Math.round(x),Math.round(y))}
 function drawTree(t){if(!t.alive)return;let x=t.x,y=t.y;rect(x-4,y-4,8,13,'#79502d');rect(x-12,y-21,24,18,'#246b3b');rect(x-9,y-26,18,10,'#39894a');rect(x-5,y-29,10,6,'#57a44b');rect(x-9,y-20,5,5,'#69b955');}
@@ -111,7 +110,7 @@ for(const b of buildings)drawHouse(b);for(const t of trees)drawTree(t);for(const
 if(night){ctx.fillStyle=player.lamp?'#101d4b22':'#101d4b55';ctx.fillRect(player.x-300,player.y-300,600,600)}
 ctx.restore();
 const shop=nearBuilding();if(shop&&!nearShop){say('Рядом '+shop.name+' — нажми «Магазин»!')}nearShop=!!shop;
-ctx.fillStyle='#18233b';ctx.fillRect(W-116,H-17,108,12);ctx.fillStyle='#f5d46c';ctx.font='7px monospace';ctx.textAlign='center';ctx.fillText('Проведи по экрану: камера',W-62,H-8);
+
 }
 frame();updateHud();
 })();
