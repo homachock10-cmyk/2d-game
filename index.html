@@ -62,11 +62,12 @@ const products=[
 {id:'meal',name:'🍞 Походная еда',price:6,desc:'Восстанавливает здоровье',buy(){if(player.health>=100)return 'Здоровье уже полное';player.health=Math.min(100,player.health+18);return 'Ты перекусил!'}}
 ];
 const goods=document.getElementById('goods');
-products.forEach(p=>{const b=document.createElement('button');b.innerHTML=p.name+'<br>'+p.desc+'<br>🪙 '+p.price;b.addEventListener('click',()=>{if(player.coins<p.price){say('Не хватает монет!');return}const msg=p.buy();if(msg.includes('уже')||msg.includes('полное')){say(msg);return}player.coins-=p.price;updateHud();say(msg)});goods.appendChild(b)});
+function renderGoods(list){goods.replaceChildren();list.forEach(p=>{const button=document.createElement('button');button.innerHTML=p.name+'<br>'+p.desc+'<br>🪙 '+p.price;button.addEventListener('click',()=>{if(player.coins<p.price){say('Не хватает монет!');return}const msg=p.buy();if(msg.includes('уже')||msg.includes('полное')){say(msg);return}player.coins-=p.price;updateHud();say(msg)});goods.appendChild(button)})}
+const stock={shop:[products[0],products[3]],potion:[products[1],products[5]],gear:[products[2],products[3]],food:[products[5],products[4]]};
 function updateHud(){document.getElementById('coins').textContent=player.coins;document.getElementById('shopCoins').textContent=player.coins;document.getElementById('health').textContent=player.health;document.getElementById('axeStatus').textContent=player.axe>1?'улучшенный':'обычный'}
 function say(t){const e=document.getElementById('hint');e.textContent=t;e.style.display='block';clearTimeout(messageTimer);messageTimer=setTimeout(()=>e.style.display='none',1800)}
-function nearBuilding(){return buildings.find(b=>b.kind==='shop'&&Math.hypot(player.x-(b.x+b.w/2),player.y-(b.y+b.h+12))<78)}
-function openShop(){if(!nearBuilding()){say('Подойди к лавке в городе — она справа от дома!');return}document.getElementById('shopPanel').style.display='block';updateHud()}
+function nearBuilding(){return buildings.find(b=>b.kind!=='home'&&Math.hypot(player.x-(b.x+b.w/2),player.y-(b.y+b.h+12))<92)}
+function openShop(){const b=nearBuilding();if(!b){say('Подойди к одной из городских лавок!');return}document.querySelector('#shopPanel h2').textContent='🏪 '+b.name.toUpperCase();renderGoods(stock[b.kind]||products);document.getElementById('shopPanel').style.display='block';updateHud()}
 document.getElementById('interact').addEventListener('click',openShop);document.getElementById('closeShop').addEventListener('click',()=>document.getElementById('shopPanel').style.display='none');
 document.getElementById('sleep').addEventListener('click',()=>{if(Math.hypot(player.x-140,player.y-425)>90){say('Подойди к своему дому, чтобы поспать');return}dayTick=0;player.health=100;updateHud();say('Ты отдохнул. Началось утро!')});
 function chop(){if(player.chop>0)return;let t=null,dist=1e9;for(const a of trees){let d=Math.hypot(player.x-a.x,player.y-a.y);if(a.alive&&d<dist){dist=d;t=a}}if(!t||dist>52){say('Подойди ближе к дереву!');return}player.chop=1;t.hits++;if(t.hits>=(player.axe>1?2:3)){t.alive=false;player.coins+=5;updateHud();say('Дерево срублено: +5 монет!')}else say('Удар топором '+t.hits+'/'+(player.axe>1?2:3))}
@@ -93,7 +94,7 @@ rect(40,380,590,42,'#bca77c');rect(40,390,590,3,'#d7c59a');
 for(const b of buildings)drawHouse(b);for(const t of trees)drawTree(t);for(const a of animals)drawAnimal(a);drawPlayer();
 if(night){ctx.fillStyle='#101d4b55';ctx.fillRect(player.x-300,player.y-300,600,600)}
 ctx.restore();
-const shop=nearBuilding();if(shop&&!nearShop){say('Ты в городе! Подойди к лавке и нажми «Магазин».')}nearShop=!!shop;
+const shop=nearBuilding();if(shop&&!nearShop){say('Рядом '+shop.name+' — нажми «Магазин»!')}nearShop=!!shop;
 ctx.fillStyle='#18233b';ctx.fillRect(W-116,H-17,108,12);ctx.fillStyle='#f5d46c';ctx.font='7px monospace';ctx.textAlign='center';ctx.fillText('Проведи по экрану: камера',W-62,H-8);
 }
 frame();updateHud();
