@@ -14,8 +14,9 @@ html, body, body * {
 body {
     margin: 0;
     overflow: hidden;
-    font-family: Arial, sans-serif;
+    font-family: "Courier New", monospace;
     background: #87ceeb;
+    image-rendering: pixelated;
 }
 #game {
     display: block;
@@ -30,7 +31,10 @@ body {
     color: white;
     background: #0009;
     padding: 12px;
-    border-radius: 12px;
+    border: 3px solid #f5d77e;
+    border-radius: 0;
+    box-shadow: 4px 4px 0 #18223b;
+    font-weight: bold;
     z-index: 2;
 }
 #controls {
@@ -45,7 +49,9 @@ button {
     width: 58px;
     height: 58px;
     border: 0;
-    border-radius: 14px;
+    border: 3px solid #ffe49a;
+    border-radius: 0;
+    box-shadow: 3px 3px 0 #17213a;
     color: white;
     background: #263dba;
     font-size: 22px;
@@ -67,8 +73,15 @@ button {
     width: 100px;
     height: 65px;
     background: #278447;
-    font-size: 14px;\n    line-height: 1.2;
+    font-size: 14px;
+    line-height: 1.2;
 }
+#shopOpen { position:fixed; top:12px; right:12px; width:112px; height:52px; background:#9b552d; font-size:14px; z-index:4; }
+#shopPanel { display:none; position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); width:min(320px,82vw); padding:18px; color:#fff4c9; background:#25334b; border:4px solid #f6ce6d; box-shadow:6px 6px 0 #111827; z-index:10; font-family:"Courier New",monospace; text-align:center; }
+#shopPanel h2 { margin:0 0 10px; color:#ffd96a; }
+#shopPanel p { line-height:1.5; }
+#shopPanel button { width:100%; height:auto; min-height:46px; margin-top:8px; padding:8px; font-size:14px; background:#27734c; }
+#shopPanel #closeShop { background:#87423b; }
 </style>
 </head>
 <body>
@@ -90,6 +103,14 @@ button {
 
 <button id="sleep">🛏️ Спать</button>
 <button id="collect">🪓 Рубить<br>дерево</button>
+<button id="shopOpen">🏪 Магазин</button>
+<div id="shopPanel">
+  <h2>🏪 МАГАЗИН</h2>
+  <p>Добро пожаловать в городскую лавку!</p>
+  <p>Улучшенный топор — <b>15 монет</b><br>Срубает дерево за 2 удара.</p>
+  <button id="buyAxe">Купить улучшенный топор</button>
+  <button id="closeShop">Выйти из магазина</button>
+</div>
 
 <script src="./three.min.js"></script>
 <script>
@@ -118,9 +139,12 @@ const camera = new THREE.PerspectiveCamera(
     70, innerWidth / innerHeight, 0.1, 200
 );
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const renderer = new THREE.WebGLRenderer({ antialias: false });
+renderer.setSize(Math.max(320, Math.floor(innerWidth / 2)), Math.max(180, Math.floor(innerHeight / 2)), false);
+renderer.setPixelRatio(1);
+renderer.domElement.style.width = "100vw";
+renderer.domElement.style.height = "100vh";
+renderer.domElement.style.imageRendering = "pixelated";
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 renderer.domElement.id = "game";
@@ -209,6 +233,35 @@ roof.position.set(5, 4, -5);
 roof.rotation.y = Math.PI / 4;
 scene.add(roof);
 
+// Город в 32-битном стиле: мощёная улица, домики, фонари и лавка.
+const road = new THREE.Mesh(new THREE.PlaneGeometry(34, 9), new THREE.MeshStandardMaterial({color:0xb6a17a}));
+road.rotation.x = -Math.PI / 2;
+road.position.set(19, 0.025, -5);
+scene.add(road);
+for (let i=0;i<7;i++) box(4+i*5, 0.06, -5, 0.16, 0.03, 0.18, 0xf5d77e);
+function townHouse(x,z,wall,roofColor) {
+    box(x,1.6,z,4.2,3.2,3.8,wall);
+    const r = new THREE.Mesh(new THREE.ConeGeometry(3.1,1.8,4),new THREE.MeshStandardMaterial({color:roofColor,flatShading:true}));
+    r.position.set(x,4,z); r.rotation.y=Math.PI/4; r.castShadow=true; scene.add(r);
+    box(x,0.9,z+1.96,0.85,1.8,0.12,0x65412c);
+    box(x-1.15,2,z+2,0.72,0.72,0.12,0x77cbe8);
+    box(x+1.15,2,z+2,0.72,0.72,0.12,0x77cbe8);
+}
+townHouse(15,-12,0xe8c78d,0xb64d3d);
+townHouse(24,-12,0xd8b6ef,0x5544a4);
+townHouse(28,1,0xf0d6a2,0x36865d);
+// Магазин с ярким навесом и вывеской.
+box(18,1.6,-1,4.8,3.2,4.2,0xe9c48c);
+box(18,3.25,1.18,5.2,0.38,0x9c3d35);
+box(18,2.95,1.43,3.4,0.55,0xffd85e);
+box(18,3.8,1.4,2.3,0.3,0x4e2e26);
+box(16.8,2.4,1.24,0.55,0.65,0x8bd4e8);
+box(19.2,2.4,1.24,0.55,0.65,0x8bd4e8);
+// Уличные фонари.
+for (const lx of [10,22,29]) {
+    box(lx,1.4,-7,0.16,2.8,0.16,0x493b35);
+    box(lx,2.9,-7,0.75,0.28,0.55,0xffd978);
+}
 // Персонаж
 const player = new THREE.Group();
 
@@ -264,7 +317,7 @@ rightArm.add(axe);
 scene.add(player);
 player.position.set(0, 0, 0);
 
-const cameraYaw = 0;
+let cameraYaw = 0;
 const cameraPitch = 0.46;
 const cameraDistance = 9;
 camera.position.set(0, 5, 8);
@@ -279,6 +332,8 @@ const dayLength = 120;
 let walkTime = 0;
 let chopCooldown = 0;
 let chopping = false;
+let chopAnimation = 0;
+let axeUpgrade = false;
 
 // Камера вращается вокруг персонажа только по горизонтали.
 // Приближение и изменение наклона отключены.
@@ -349,6 +404,8 @@ for (const event of ["pointerup", "pointercancel", "pointerleave"]) {
     document.getElementById("collect").addEventListener(event, () => chopping = false);
 }
 document.getElementById("collect").addEventListener("click", () => {
+    chopping = true;
+    chopAnimation = 0.001;
     // Один удар топором. Дерево даёт монеты после нескольких ударов.
     if (chopCooldown > 0) return;
     let nearest = null;
@@ -365,7 +422,7 @@ document.getElementById("collect").addEventListener("click", () => {
     rightArm.rotation.z = -0.35;
     nearest.hits++;
     chopCooldown = 0.45;
-    if (nearest.hits >= 3) {
+    if (nearest.hits >= (axeUpgrade ? 2 : 3)) {
         scene.remove(nearest.trunk);
         scene.remove(nearest.leaves);
         const index = trees.indexOf(nearest);
@@ -374,10 +431,29 @@ document.getElementById("collect").addEventListener("click", () => {
         document.getElementById("coins").textContent = coins;
         showMessage("+5 монет за дерево!");
     } else {
-        showMessage("Удар топором: " + nearest.hits + "/3");
+        showMessage("Удар топором: " + nearest.hits + (axeUpgrade ? "/2" : "/3"));
     }
 });
 
+// Магазин доступен рядом с городской лавкой.
+const shopPanel = document.getElementById("shopPanel");
+document.getElementById("shopOpen").addEventListener("click", () => {
+    if (Math.hypot(player.position.x - 18, player.position.z - (-1)) > 7) {
+        showMessage("Иди по дороге в город к лавке!");
+        return;
+    }
+    shopPanel.style.display = "block";
+});
+document.getElementById("closeShop").addEventListener("click", () => shopPanel.style.display = "none");
+document.getElementById("buyAxe").addEventListener("click", () => {
+    if (axeUpgrade) { showMessage("У тебя уже есть улучшенный топор!"); return; }
+    if (coins < 15) { showMessage("Нужно 15 монет. Руби деревья!"); return; }
+    coins -= 15;
+    axeUpgrade = true;
+    document.getElementById("coins").textContent = coins;
+    document.getElementById("buyAxe").textContent = "Улучшенный топор куплен ✓";
+    showMessage("Топор улучшен! Теперь нужно 2 удара.");
+});
 let messageTimer = 0;
 function showMessage(message) {
     let el = document.getElementById("gameMessage");
@@ -446,6 +522,18 @@ function animate() {
             rightArm.rotation.x *= 0.8;
         }
     }
+    if (chopAnimation > 0) {
+        chopAnimation += 1/60;
+        const swing = Math.sin(Math.min(chopAnimation / 0.38, 1) * Math.PI);
+        rightArm.rotation.x = -0.25 - swing * 1.65;
+        rightArm.rotation.z = -swing * 0.42;
+        axe.rotation.z = swing * 0.28;
+        if (chopAnimation >= 0.38) {
+            chopAnimation = 0;
+            chopping = false;
+            axe.rotation.z = 0;
+        }
+    }
     if (chopCooldown > 0) chopCooldown = Math.max(0, chopCooldown - 1 / 60);
     if (chopCooldown === 0 && !chopping) {
         rightArm.rotation.x *= 0.82;
@@ -468,7 +556,7 @@ function animate() {
 addEventListener("resize", () => {
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(innerWidth, innerHeight);
+    renderer.setSize(Math.max(320, Math.floor(innerWidth / 2)), Math.max(180, Math.floor(innerHeight / 2)), false);
 });
 
 animate();
