@@ -58,7 +58,7 @@ button {
     width: 100px;
     height: 65px;
     background: #278447;
-    font-size: 15px;
+    font-size: 14px;\n    line-height: 1.2;
 }
 </style>
 </head>
@@ -78,7 +78,7 @@ button {
     <button id="right">▶</button>
 </div>
 
-<button id="collect">🌳 Собрать</button>
+<button id="collect">🪓 Рубить<br>дерево</button>
 
 <script src="./three.min.js"></script>
 <script>
@@ -141,9 +141,10 @@ function box(x, y, z, sx, sy, sz, color) {
     return mesh;
 }
 
-function tree(x, z) {
-    box(x, 1, z, 0.5, 2, 0.5, 0x76502d);
+const trees = [];
 
+function tree(x, z) {
+    const trunk = box(x, 1, z, 0.5, 2, 0.5, 0x76502d);
     const leaves = new THREE.Mesh(
         new THREE.ConeGeometry(1.5, 3, 6),
         new THREE.MeshStandardMaterial({ color: 0x24743a })
@@ -151,15 +152,13 @@ function tree(x, z) {
     leaves.position.set(x, 3, z);
     leaves.castShadow = true;
     scene.add(leaves);
+    trees.push({ x, z, trunk, leaves, hits: 0 });
 }
 
 for (let i = 0; i < 35; i++) {
     const x = Math.random() * 70 - 35;
     const z = Math.random() * 70 - 35;
-
-    if (Math.abs(x) > 7 || Math.abs(z) > 7) {
-        tree(x, z);
-    }
+    if (Math.abs(x) > 7 || Math.abs(z) > 7) tree(x, z);
 }
 
 // Дом
@@ -190,6 +189,41 @@ const head = new THREE.Mesh(
 );
 head.position.y = 2;
 player.add(head);
+
+// Руки и ноги с шарнирами, чтобы они могли двигаться при ходьбе.
+const skinMaterial = new THREE.MeshStandardMaterial({ color: 0xffcc99 });
+const pantsMaterial = new THREE.MeshStandardMaterial({ color: 0x263b6b });
+function makeLimb(material, width, height, depth, x, y) {
+    const pivot = new THREE.Group();
+    pivot.position.set(x, y, 0);
+    const limb = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), material);
+    limb.position.y = -height / 2;
+    limb.castShadow = true;
+    pivot.add(limb);
+    player.add(pivot);
+    return pivot;
+}
+const leftArm = makeLimb(skinMaterial, 0.24, 0.72, 0.25, -0.57, 1.55);
+const rightArm = makeLimb(skinMaterial, 0.24, 0.72, 0.25, 0.57, 1.55);
+const leftLeg = makeLimb(pantsMaterial, 0.3, 0.7, 0.32, -0.23, 0.72);
+const rightLeg = makeLimb(pantsMaterial, 0.3, 0.7, 0.32, 0.23, 0.72);
+
+// Топор в правой руке.
+const axe = new THREE.Group();
+const axeHandle = new THREE.Mesh(
+    new THREE.BoxGeometry(0.09, 0.72, 0.09),
+    new THREE.MeshStandardMaterial({ color: 0x80502c })
+);
+axeHandle.position.y = -0.25;
+axe.add(axeHandle);
+const axeHead = new THREE.Mesh(
+    new THREE.BoxGeometry(0.38, 0.24, 0.12),
+    new THREE.MeshStandardMaterial({ color: 0xbfc7d1, metalness: 0.45, roughness: 0.4 })
+);
+axeHead.position.set(0.13, 0.02, 0);
+axe.add(axeHead);
+axe.position.set(0, -0.62, 0.02);
+rightArm.add(axe);
 
 scene.add(player);
 player.position.set(0, 0, 0);
@@ -264,20 +298,98 @@ document.addEventListener("keyup", e => {
     if (e.key === "d" || e.key === "ArrowRight") keys.right = false;
 });
 
-document.getElementById("collect").addEventListener("click", () => {
-    coins++;
-    document.getElementById("coins").textContent = coins;
+document.getElementById("collect").addEventListener("pointerdown", e => {
+    e.preventDefault();
+    chopping = true;
 });
+for (const event of ["pointerup", "pointercancel", "pointerleave"]) {
+    document.getElementById("collect").addEventListener(event, () => chopping = false);
+}
+document.getElementById("collect").addEventListener("click", () => {
+    // Один удар топором. Дерево даёт монеты после нескольких ударов.
+    if (chopCooldown > 0) return;
+    let nearest = null;
+    let nearestDistance = Infinity;
+    for (const t of trees) {
+        const d = Math.hypot(t.x - player.position.x, t.z - player.position.z);
+        if (d < nearestDistance) { nearestDistance = d; nearest = t; }
+    }
+    if (!nearest || nearestDistance > 3.2) {
+        showMessage("Подойди ближе к дереву!");
+        return;
+    }
+    rightArm.rotation.x = -1.5;
+    rightArm.rotation.z = -0.35;
+    nearest.hits++;
+    chopCooldown = 0.45;
+    if (nearest.hits >= 3) {
+        scene.remove(nearest.trunk);
+        scene.remove(nearest.leaves);
+        const index = trees.indexOf(nearest);
+        if (index !== -1) trees.splice(index, 1);
+        coins += 5;
+        document.getElementById("coins").textContent = coins;
+        showMessage("+5 монет за дерево!");
+    } else {
+        showMessage("Удар топором: " + nearest.hits + "/3");
+    }
+});
+
+let messageTimer = 0;
+function showMessage(message) {
+    let el = document.getElementById("gameMessage");
+    if (!el) {
+        el = document.createElement("div");
+        el.id = "gameMessage";
+        el.style.cssText = "position:fixed;top:100px;left:50%;transform:translateX(-50%);background:#000b;color:white;padding:10px 14px;border-radius:10px;z-index:5;text-align:center;";
+        document.body.appendChild(el);
+    }
+    el.textContent = message;
+    el.style.display = "block";
+    clearTimeout(messageTimer);
+    messageTimer = setTimeout(() => el.style.display = "none", 1400);
+}
 
 function animate() {
     requestAnimationFrame(animate);
 
-    const speed = 0.09;
-
-    if (keys.forward) player.position.z -= speed;
-    if (keys.back) player.position.z += speed;
-    if (keys.left) player.position.x -= speed;
-    if (keys.right) player.position.x += speed;
+    const movingForward = keys.forward || keys.back;
+    const movingSideways = keys.left || keys.right;
+    const moveForward = (keys.forward ? 1 : 0) - (keys.back ? 1 : 0);
+    const moveSide = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+    const moveLength = Math.hypot(moveForward, moveSide) || 1;
+    const speed = 0.085;
+    if (movingForward || movingSideways) {
+        const forwardX = -Math.sin(cameraYaw);
+        const forwardZ = -Math.cos(cameraYaw);
+        const rightX = Math.cos(cameraYaw);
+        const rightZ = -Math.sin(cameraYaw);
+        player.position.x += (forwardX * moveForward + rightX * moveSide) / moveLength * speed;
+        player.position.z += (forwardZ * moveForward + rightZ * moveSide) / moveLength * speed;
+        player.rotation.y = Math.atan2(
+            forwardX * moveForward + rightX * moveSide,
+            forwardZ * moveForward + rightZ * moveSide
+        );
+        walkTime += 0.16;
+        leftLeg.rotation.x = Math.sin(walkTime) * 0.65;
+        rightLeg.rotation.x = -Math.sin(walkTime) * 0.65;
+        if (!chopping) {
+            leftArm.rotation.x = -Math.sin(walkTime) * 0.5;
+            rightArm.rotation.x = Math.sin(walkTime) * 0.5;
+        }
+    } else {
+        leftLeg.rotation.x *= 0.8;
+        rightLeg.rotation.x *= 0.8;
+        if (!chopping) {
+            leftArm.rotation.x *= 0.8;
+            rightArm.rotation.x *= 0.8;
+        }
+    }
+    if (chopCooldown > 0) chopCooldown = Math.max(0, chopCooldown - 1 / 60);
+    if (chopCooldown === 0 && !chopping) {
+        rightArm.rotation.x *= 0.82;
+        rightArm.rotation.z *= 0.82;
+    }
 
     const horizontalDistance = Math.cos(cameraPitch) * cameraDistance;
     const targetCameraX = player.position.x + Math.sin(cameraYaw) * horizontalDistance;
