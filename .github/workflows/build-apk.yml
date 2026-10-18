@@ -57,7 +57,6 @@ jobs:
             cp index.html app/src/main/assets/index.html
           fi
           
-          curl -fL https://unpkg.com/three@0.160.0/build/three.min.js -o app/src/main/assets/three.min.js
           
           cat > settings.gradle <<'EOF'
           pluginManagement {
@@ -113,8 +112,7 @@ jobs:
                   android:theme="@android:style/Theme.Material.Light.NoActionBar"
                   android:label="RPG"
                   android:icon="@mipmap/ic_launcher"
-                  android:usesCleartextTraffic="true"
-                  android:hardwareAccelerated="true">
+                  android:usesCleartextTraffic="true">
                   <activity
                       android:name=".MainActivity"
                       android:screenOrientation="landscape"
@@ -158,7 +156,6 @@ jobs:
                   );
 
                   WebView webView = new WebView(this);
-                  webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
                   WebSettings settings = webView.getSettings();
                   settings.setJavaScriptEnabled(true);
                   settings.setDomStorageEnabled(true);
