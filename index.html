@@ -24,7 +24,7 @@ button{font-family:monospace;font-weight:bold;color:#fff5cf;background:#344f8b;b
 #closeShop{display:block;width:100%;height:42px;margin-top:10px;background:#91453b}
 @media(min-width:800px){#controls{left:20px;bottom:20px}#hud{font-size:14px}#hint{font-size:15px}}
 
-#game{visibility:visible}#scene3d{position:fixed;inset:0;width:100vw;height:100vh;display:none;visibility:hidden;z-index:0;touch-action:none}#hud,#controls,.action,#hint{visibility:hidden}
+#game{display:block;visibility:visible;width:100vw;height:100vh;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none}#scene3d{display:none!important;visibility:hidden;pointer-events:none}#hud,#controls,.action,#hint{visibility:visible}
 .screen{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;overflow:auto;padding:18px;background:linear-gradient(#101d36dd,#172b38f2);color:#fff2c5;text-align:center}.screen.hidden{display:none}
 .menu-card{width:min(520px,96vw);max-height:94vh;overflow:auto;padding:16px;background:#26334b;border:4px solid #f5d46c;box-shadow:7px 7px #10151f}
 .game-art{display:block;width:min(100%,420px);height:auto;margin:0 auto 12px;image-rendering:pixelated;border:3px solid #f5d46c;background:#6ba95b}
@@ -58,7 +58,6 @@ button{font-family:monospace;font-weight:bold;color:#fff5cf;background:#344f8b;b
 <div id="controls"><button id="up">▲</button><button id="left">◀</button><button id="down">▼</button><button id="right">▶</button></div>
 <button id="chop" class="action">🪓 Рубить</button><button id="interact" class="action">🏪 Магазин</button><button id="sleep" class="action">🛏 Спать</button><button id="attack" class="action">⚔️ Атаковать</button><div id="dream"><div id="dreamCard"><h2>🌙 Сон путешественника</h2><p id="dreamText"></p><button id="wakeDream">Проснуться</button></div></div>
 <div id="shopPanel"><h2>🏪 ГОРОДСКАЯ ЛАВКА</h2><p>Товары для путешественника. Монеты: <b id="shopCoins">0</b></p><div id="goods"></div><button id="closeShop">Закрыть магазин</button></div>
-<script src="three.min.js"></script>
 <script>
 (function(){
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d',{alpha:false});
