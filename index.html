@@ -51,6 +51,15 @@ button {
     font-size: 22px;
     touch-action: none;
 }
+#sleep {
+    position: fixed;
+    right: 20px;
+    bottom: 105px;
+    width: 100px;
+    height: 52px;
+    background: #795548;
+    font-size: 14px;
+}
 #collect {
     position: fixed;
     right: 20px;
@@ -68,7 +77,8 @@ button {
     🌿 Adventure RPG<br>
     ❤️ Здоровье: 100<br>
     ⭐ Уровень: 1<br>
-    🪙 Монеты: <span id="coins">0</span>
+    🪙 Монеты: <span id="coins">0</span><br>
+    🌤️ Время: <span id="dayLabel">День</span>
 </div>
 
 <div id="controls">
@@ -78,6 +88,7 @@ button {
     <button id="right">▶</button>
 </div>
 
+<button id="sleep">🛏️ Спать</button>
 <button id="collect">🪓 Рубить<br>дерево</button>
 
 <script src="./three.min.js"></script>
@@ -161,6 +172,31 @@ for (let i = 0; i < 35; i++) {
     if (Math.abs(x) > 7 || Math.abs(z) > 7) tree(x, z);
 }
 
+// Овцы и кролики из 3D-фигур гуляют по миру.
+const animals = [];
+function makeAnimal(x, z, color, type) {
+    const animal = new THREE.Group();
+    const coat = new THREE.MeshStandardMaterial({ color });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x55402b });
+    const sheep = type === "sheep";
+    const body = new THREE.Mesh(new THREE.BoxGeometry(sheep ? 1.05 : 0.65, sheep ? 0.65 : 0.4, 0.55), coat);
+    body.position.y = sheep ? 0.72 : 0.48;
+    animal.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(sheep ? 0.25 : 0.19, 10, 8), coat);
+    head.position.set(0, sheep ? 0.9 : 0.58, -0.38);
+    animal.add(head);
+    for (const lx of [-0.22, 0.22]) for (const lz of [-0.17, 0.17]) {
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.12, sheep ? 0.4 : 0.25, 0.12), dark);
+        leg.position.set(lx, sheep ? 0.25 : 0.18, lz);
+        animal.add(leg);
+    }
+    animal.position.set(x, 0, z);
+    scene.add(animal);
+    animals.push({ group: animal, angle: Math.random()*Math.PI*2, timer: 1+Math.random()*3, speed: 0.008+Math.random()*0.008 });
+}
+for (let i=0;i<5;i++) makeAnimal(Math.random()*24-12,Math.random()*24-12,0xf1eee3,"sheep");
+for (let i=0;i<4;i++) makeAnimal(Math.random()*24-12,Math.random()*24-12,0x9a7049,"rabbit");
+
 // Дом
 box(5, 1.5, -5, 5, 3, 5, 0xe0c49a);
 
@@ -228,48 +264,23 @@ rightArm.add(axe);
 scene.add(player);
 player.position.set(0, 0, 0);
 
-let cameraYaw = 0;
-let cameraPitch = 0.46;
+const cameraYaw = 0;
+const cameraPitch = 0.46;
 const cameraDistance = 9;
 camera.position.set(0, 5, 8);
 camera.lookAt(player.position);
 
 let coins = 0;
 const keys = {};
+let dayClock = 0;
+const dayLength = 120;
 
 // Состояние ходьбы и рубки: нужно инициализировать до первого кадра игры.
 let walkTime = 0;
 let chopCooldown = 0;
 let chopping = false;
 
-// Поворот камеры мышью на компьютере или пальцем на телефоне
-let draggingCamera = false;
-let lastPointerX = 0;
-let lastPointerY = 0;
-
-renderer.domElement.addEventListener("pointerdown", e => {
-    draggingCamera = true;
-    lastPointerX = e.clientX;
-    lastPointerY = e.clientY;
-    renderer.domElement.setPointerCapture(e.pointerId);
-});
-
-renderer.domElement.addEventListener("pointermove", e => {
-    if (!draggingCamera) return;
-    const dx = e.clientX - lastPointerX;
-    const dy = e.clientY - lastPointerY;
-    lastPointerX = e.clientX;
-    lastPointerY = e.clientY;
-
-    cameraYaw -= dx * 0.008;
-    cameraPitch = Math.max(0.12, Math.min(1.05, cameraPitch + dy * 0.005));
-});
-
-function stopCameraDrag() {
-    draggingCamera = false;
-}
-renderer.domElement.addEventListener("pointerup", stopCameraDrag);
-renderer.domElement.addEventListener("pointercancel", stopCameraDrag);
+// Камера закреплена за персонажем; касание игрового мира не вращает и не приближает её.
 
 function bindButton(id, key) {
     const button = document.getElementById(id);
@@ -301,6 +312,15 @@ document.addEventListener("keyup", e => {
     if (e.key === "s" || e.key === "ArrowDown") keys.back = false;
     if (e.key === "a" || e.key === "ArrowLeft") keys.left = false;
     if (e.key === "d" || e.key === "ArrowRight") keys.right = false;
+});
+
+document.getElementById("sleep").addEventListener("click", () => {
+    if (Math.hypot(player.position.x - 5, player.position.z + 5) > 5.5) {
+        showMessage("Подойди к дому, чтобы поспать!");
+        return;
+    }
+    dayClock = 0;
+    showMessage("Ты поспал. Наступило утро!");
 });
 
 document.getElementById("collect").addEventListener("pointerdown", e => {
@@ -357,6 +377,24 @@ function showMessage(message) {
 
 function animate() {
     requestAnimationFrame(animate);
+
+    dayClock = (dayClock + 1/60) % dayLength;
+    const nightAmount = (1 - Math.cos(dayClock/dayLength*Math.PI*2))/2;
+    const sky = new THREE.Color(0x87ceeb).lerp(new THREE.Color(0x101b38), nightAmount);
+    scene.background.copy(sky);
+    scene.fog.color.copy(sky);
+    sun.intensity = 2 - nightAmount*1.65;
+    scene.children.forEach(obj => { if (obj.isHemisphereLight) obj.intensity = 2 - nightAmount*1.35; });
+    document.getElementById("dayLabel").textContent = nightAmount > 0.62 ? "Ночь" : "День";
+
+    for (const animal of animals) {
+        animal.timer -= 1/60;
+        if (animal.timer <= 0) { animal.angle += (Math.random()-0.5)*2.2; animal.timer = 1.5+Math.random()*4; }
+        animal.group.position.x += Math.sin(animal.angle)*animal.speed;
+        animal.group.position.z += Math.cos(animal.angle)*animal.speed;
+        if (Math.abs(animal.group.position.x)>32 || Math.abs(animal.group.position.z)>32) animal.angle += Math.PI;
+        animal.group.rotation.y = Math.atan2(Math.sin(animal.angle),Math.cos(animal.angle));
+    }
 
     const movingForward = keys.forward || keys.back;
     const movingSideways = keys.left || keys.right;
